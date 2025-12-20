@@ -36,9 +36,11 @@ module.exports = {
         clawffeeInternals.prettyPrepareStack(error, stack);
     },
     fileManagers: globalThis.clawffeeInternals.fileManagers,
-    addFileManager(extension, onRequire) {
+    addFileManager(extension, onRequire, onLoad, onUnload) {
         globalThis.clawffeeInternals.fileManagers[extension] = {
-            onRequire
+            onRequire,
+            onLoad, 
+            onUnload
         }
     },
     //TODO: comment all this again
