@@ -41,6 +41,7 @@ module.exports = {
             onRequire
         }
     },
+    //TODO: comment all this again
     getPrefixStack() {
         globalThis.clawffeeInternals.getPrefixStack();
     },
