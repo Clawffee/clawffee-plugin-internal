@@ -99,12 +99,15 @@ function runAsFile(fullpath, funcStr, keepCache) {
     return mod;
 }
 
-globalThis.clawffeeInternals.defaultFile = "console.log('Awoof!')\n";
+globalThis.clawffeeInternals.js = {
+    defaultFile: [() => "console.log('Awoof!')\n"]
+}
+
 console.info("To start, create a .js file in the commands folder!");
 fileManagers['.js'] = {
     onLoad(fullpath, data, initial) {
         if(!data.trim()) {
-            data = globalThis.clawffeeInternals.defaultFile + data;
+            data = globalThis.js.defaultFile.map((v) => {try {return v()} catch(e) {console.error(e); return '';}}).join('') + data;
             setTimeout(() => fs.writeFile(fullpath, data, (err) => {
                 if(err) {
                     console.error(err);

@@ -36,8 +36,36 @@ module.exports = {
         clawffeeInternals.prettyPrepareStack(error, stack);
     },
     fileManagers: globalThis.clawffeeInternals.fileManagers,
-    addFileManager() {
-        //TODO:
+    addFileManager(extension, onRequire) {
+        globalThis.clawffeeInternals.fileManagers[extension] = {
+            onRequire
+        }
+    },
+    getPrefixStack() {
+        globalThis.clawffeeInternals.getPrefixStack();
+    },
+    setPrefixStack(stack) {
+        globalThis.clawffeeInternals.setPrefixStack(stack);
+    },
+    getRunningScriptName() {
+        return globalThis.clawffeeInternals.getRunningScriptName();
+    },
+    appendDefaultFile(fn) {
+        if(typeof fn === 'function') {
+            globalThis.clawffeeInternals.js.defaultFile.push(fn)
+        } else {
+            globalThis.clawffeeInternals.js.defaultFile.unshift(() => fn);
+        }
+    },
+    prefixDefaultFile(fn) {
+        if(typeof fn === 'function') {
+            globalThis.clawffeeInternals.js.defaultFile.unshift(fn)
+        } else {
+            globalThis.clawffeeInternals.js.defaultFile.unshift(() => fn);
+        }
+    },
+    addFileCleanupFunc(filename, fn) {
+        globalThis.clawffeeInternals.fileCleanupFuncs[filename]?.push(fn);
     }
 
 }
