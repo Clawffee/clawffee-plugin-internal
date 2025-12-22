@@ -45,7 +45,7 @@ module.exports = {
     },
     //TODO: comment all this again
     getPrefixStack() {
-        globalThis.clawffeeInternals.getPrefixStack();
+        return globalThis.clawffeeInternals.getPrefixStack();
     },
     setPrefixStack(stack) {
         globalThis.clawffeeInternals.setPrefixStack(stack);
