@@ -55,20 +55,21 @@ module.exports = {
     },
     appendDefaultFile(fn) {
         if(typeof fn === 'function') {
-            globalThis.clawffeeInternals.js.defaultFile.push(fn)
+            globalThis.clawffeeInternals.js.defaultFile
+            globalThis.clawffeeInternals.js.defaultFile.push(fn);
         } else {
-            globalThis.clawffeeInternals.js.defaultFile.unshift(() => fn);
+            globalThis.clawffeeInternals.js.defaultFile.push(() => fn);
         }
     },
     prefixDefaultFile(fn) {
         if(typeof fn === 'function') {
-            globalThis.clawffeeInternals.js.defaultFile.unshift(fn)
+            globalThis.clawffeeInternals.js.defaultFile.unshift(fn);
         } else {
             globalThis.clawffeeInternals.js.defaultFile.unshift(() => fn);
         }
+        console.log("added function to defaultFile", globalThis.clawffeeInternals.js.defaultFile);
     },
     addFileCleanupFunc(filename, fn) {
         globalThis.clawffeeInternals.fileCleanupFuncs[filename]?.push(fn);
     }
-
 }

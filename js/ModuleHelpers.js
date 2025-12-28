@@ -104,10 +104,10 @@ globalThis.clawffeeInternals.js = {
 }
 
 console.info("To start, create a .js file in the commands folder!");
-fileManagers['.js'] = {
+globalThis.clawffeeInternals.fileManagers['.js'] = {
     onLoad(fullpath, data, initial) {
         if(!data.trim()) {
-            data = globalThis.clawffeeInternals.js.defaultFile.map((v) => {try {return v()} catch(e) {console.error(e); return '';}}).join('') + data;
+            data = globalThis.clawffeeInternals.js.defaultFile.map((v) => {try {return v(fullpath)} catch(e) {console.error(e); return '';}}).join('') + data;
             setTimeout(() => fs.writeFile(fullpath, data, (err) => {
                 if(err) {
                     console.error(err);
