@@ -7,8 +7,6 @@ console.log("╴".repeat(32) + "╮");
 if(process.argv.includes('--verbose'))
     require('./internal/verbose');
 
-globalThis.clawffeeInternals = {}
-
 // Global error handlers
 process.on('uncaughtException', (err) => {
     console.error("Uncaught Error!", err);

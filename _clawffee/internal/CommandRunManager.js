@@ -50,6 +50,26 @@ const { sharedServerData } = require('./SharedServerData');
 globalThis.clawffeeInternals.fileCleanupFuncs = {}
 globalThis.clawffeeInternals.fileManagers = {};
 
+if(!fs.existsSync('config/internal/commands.json')) fs.writeFileSync('config/internal/commands.json', `
+{
+    "name": "commands",
+    "sortname": null,
+    "img": null,
+    "hidden": false,
+    "disabled": false,
+    "childfolders": {
+        "examples": {
+            "name": "examples",
+            "sortname": null,
+            "img": null,
+            "hidden": true,
+            "disabled": true,
+            "childfolders": {},
+            "childscripts": {}
+        }
+    },
+    "childscripts": {}
+}`);
 sharedServerData.internal.commands = JSON.parse(fs.readFileSync('config/internal/commands.json'));
 const config = sharedServerData.internal.commands;
 clawffeeInternals.commandConfig = config;
