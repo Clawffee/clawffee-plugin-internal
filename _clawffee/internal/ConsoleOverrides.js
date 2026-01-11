@@ -46,6 +46,8 @@ function cleanData(data, prefix) {
     return str;
 }
 
+const fs = require('fs');
+const logFile = fs.createWriteStream('log.txt');
 let ownPrefix = process.cwd().trim().length + 1;
 let longestName = 30;
 function wrapConsoleFunction(name, copy, prefix = "", skipcalls = false) {
@@ -84,8 +86,21 @@ function wrapConsoleFunction(name, copy, prefix = "", skipcalls = false) {
         }
         longestName = Math.max(longestName, renderedText.length + 2);
         const cleaneddata = cleanData(data, prefix);
-        if(name != 'debug')
+        if(name != 'debug') {
             sharedServerData.internal.log[name] = Bun.stripANSI(cleaneddata);
+        }
+
+        logFile.write(Bun.stripANSI(
+            new Date().toISOString().padEnd(longestName, " ")
+            + "╶╶┝╸" 
+            + '\n'
+            + renderedText.padEnd(longestName, " ")
+            + "  ╎ " 
+            + cleaneddata
+                .split("\n")
+                .reduce((p, v) => p + "\n".padEnd(longestName, " ") + "   ╎ " + v))
+            + '\n'
+        );
         copy(
             prefix 
             + renderedText.padEnd(longestName, " ") 
