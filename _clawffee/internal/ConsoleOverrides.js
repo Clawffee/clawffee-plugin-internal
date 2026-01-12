@@ -3,7 +3,7 @@ const util = require('util');
 const { sharedServerData } = require('./SharedServerData');
 sharedServerData.internal.log = {};
 
-const {basename } = require('path');
+const {basename, sep } = require('path');
 
 function cleanData(data, prefix) {
     let str = "";
@@ -50,6 +50,7 @@ const fs = require('fs');
 const logFile = fs.createWriteStream('log.txt');
 let ownPrefix = process.cwd().trim().length + 1;
 let longestName = 30;
+let longestLongName = 42;
 function wrapConsoleFunction(name, copy, prefix = "", skipcalls = false) {
     return (...data) => {
         const callSites = util.getCallSites(10, {
@@ -62,48 +63,57 @@ function wrapConsoleFunction(name, copy, prefix = "", skipcalls = false) {
         }
         callSites.splice(0, 1);
         let renderedText = "@system";
+        let fullname = "@system";
+        let smallname = "@system";
         if(callSites[0]) {
             let firstOverride = callSites.findIndex(v => v.Overriden);
             if(firstOverride != -1) {
-                renderedText = `${callSites[firstOverride].FileName.substring(ownPrefix + 9)}:${callSites[firstOverride].LineNumber}:${callSites[firstOverride].ColumnNumber}`;
+                smallname = `${callSites[firstOverride].FileName.substring(ownPrefix + 9)}:${callSites[firstOverride].LineNumber}:${callSites[firstOverride].ColumnNumber}`;
+                fullname = smallname;
             } else if(callSites[0].FileName[0] == "[") {
-                renderedText = `${callSites[0].FileName}`;
+                smallname = `${callSites[0].FileName}`;
+                fullname = smallname;
             } else {
-                renderedText = "@internal";
+                smallname = "@internal";
+                fullname = "@internal";
                 if(callSites[0].FileName.includes("node_modules")) {
                     let startIndex = Math.max(
-                        callSites[0].FileName.lastIndexOf("node_modules/"),
+                        callSites[0].FileName.lastIndexOf("node_modules"),
                     ) + 15;
-                    let endIndex = callSites[0].FileName.indexOf("/", startIndex);
-                    renderedText = `@${callSites[0].FileName.substring(startIndex, endIndex)} ${basename(callSites[0].FileName)}`;
+                    let endIndex = callSites[0].FileName.indexOf(sep, startIndex);
+                    smallname = `#${callSites[0].FileName.substring(startIndex, endIndex)} ${basename(callSites[0].FileName)}`;
+                    fullname = smallname;
                 } else if(callSites[0].FileName != Bun.main) {
-                    let startIndex = callSites[0].FileName.indexOf("/", ownPrefix);
-                    let endIndex = callSites[0].FileName.indexOf("/", startIndex);
-                    renderedText = `@${callSites[0].FileName.substring(startIndex, endIndex)} ${basename(callSites[0].FileName)}`;
+                    let endIndex = callSites[0].FileName.indexOf(sep, ownPrefix + 8);
+                    smallname = `\u001b[2m@${callSites[0].FileName.substring(ownPrefix + 8, endIndex)}`;
+                    fullname = `@${callSites[0].FileName.substring(ownPrefix + 8, endIndex)} ${basename(callSites[0].FileName)}`;
                 }
-                renderedText += `:${callSites[0].LineNumber}:${callSites[0].ColumnNumber}`;
+                smallname += `:${callSites[0].LineNumber}:${callSites[0].ColumnNumber}`;
+                fullname += `:${callSites[0].LineNumber}:${callSites[0].ColumnNumber}`;
             }
         }
-        longestName = Math.max(longestName, renderedText.length + 2);
+        longestName = Math.max(longestName, Bun.stripANSI(smallname).length + 2);
+        longestLongName = Math.max(longestLongName, Bun.stripANSI(fullname).length + 2);
         const cleaneddata = cleanData(data, prefix);
         if(name != 'debug') {
             sharedServerData.internal.log[name] = Bun.stripANSI(cleaneddata);
         }
 
         logFile.write(Bun.stripANSI(
-            new Date().toISOString().padEnd(longestName, " ")
+            new Date().toISOString().padEnd(longestLongName, " ")
             + "╶╶┝╸" 
             + '\n'
-            + renderedText.padEnd(longestName, " ")
+            + fullname.padEnd(longestLongName, " ")
             + "  ╎ " 
             + cleaneddata
                 .split("\n")
-                .reduce((p, v) => p + "\n".padEnd(longestName, " ") + "   ╎ " + v))
+                .reduce((p, v) => p + "\n".padEnd(longestLongName, " ") + "   ╎ " + v))
             + '\n'
         );
         copy(
             prefix 
-            + renderedText.padEnd(longestName, " ") 
+            + smallname
+            + "".padEnd(longestName - Bun.stripANSI(smallname).length, " ") 
             + "╶╶\u001b[0m┝╸" 
             + prefix 
             + cleaneddata
