@@ -78,7 +78,7 @@ function runUpdate(module, url, pubKey) {return new Promise((resolve, reject) =>
 
 globalThis.clawffeeInternals.launcher.update_info.then((info) => {
     if(info.info.message) return console.warn('couldnt check for updates', info.info.message);
-    if(!info.info.tag_name || info.info.tag_name === config.version) return;
+    if(!info.info.name || info.info.name === config.version) return;
     const updateFile = info.info.assets.find(v => v.name === info.update_data.filename);
     if(!updateFile) return console.warn('upate for clawffee malformed!');
     console.log(`\n\u001b[32mUpdate available for clawffee! \u001b[0m${info.info.tag_name}\n\n\u001b[32mUpdate now at \u001b[0;1;3;4mhttp://localhost:4444/update/internal\u001b[0m\n\n${info.info.body}\n`);
@@ -107,10 +107,10 @@ fs.readdir('plugins', (err, paths) => {
         const res = await fetch(data.url);
         if(res.status != '200') return console.warn('failed to check for updates for', p);
         const update_info = await res.json();
-        if(update_info.tag_name === data.version) return;
+        if(update_info.name === data.version) return;
         const updateFile = update_info.assets.find(v => v.name === update_file_name);
         if(!updateFile) return console.warn(`update for plugin ${p} malformed!`);
-        console.log(`\n\u001b[32mUpdate available for plugin \u001b[0m${p}\u001b[32m! \u001b[0m${update_info.tag_name}\n\n\u001b[32mUpdate now at \u001b[0;1;3;4mhttp://localhost:4444/update/${p}\u001b[0m\n\n${update_info.body}\n`);
+        console.log(`\n\u001b[32mUpdate available for plugin \u001b[0m${p}\u001b[32m! \u001b[0m${update_info.name}\n\n\u001b[32mUpdate now at \u001b[0;1;3;4mhttp://localhost:4444/update/${p}\u001b[0m\n\n${update_info.body}\n`);
         require('./Server').functions['/update/' + p] = async () => {
             try {
                 const ret = await runUpdate(p, updateFile.url, data.pub_key);
