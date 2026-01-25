@@ -4,15 +4,16 @@ function runUpdate(module, url, pubKey) {return new Promise((resolve, reject) =>
     const path = require('path');
     const { IncomingMessage } = require('http');
     const fs = require('fs');
-    if(fs.existsSync('update')) fs.rmSync('update', {recursive: true, force: true});
-    fs.mkdirSync('update');
-    const folderPath = 'update_' + module;
+    const folderPath = path.join('plugins', module + '.upd');
+    if(fs.existsSync(folderPath)) fs.rmSync(folderPath, {recursive: true, force: true});
+    fs.mkdirSync(folderPath);
     if(!url) {
         return reject('failed to find the required update file');
     }
     console.log(url);
-    function verifyDownload() {
+    async function verifyDownload() {
         console.log(`finished inflating update ${module} at ${folderPath}`);
+        await new Promise(resolve, setTimeout(resolve, 500));
         if(!globalThis.clawffeeInternals.launcher.verifyHash(folderPath, pubKey)) return reject('Hash of downloaded folder is incorrect!!!');
         try {
             fs.rmSync(`plugins/${module}.bak`, {force: true, recursive: true});

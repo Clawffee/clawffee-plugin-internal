@@ -3,6 +3,7 @@ const path = require('path');
 
 function requirePluginsRecursively(dir, depth = 0) {
     if(depth == 1) {
+        if(dir.endsWith('.bak') || dir.endsWith('.upd')) return;
         console.debug(`loading ${path.basename(dir)} plugins`);
     }
     fs.readdirSync(dir).sort((a,b) => {
