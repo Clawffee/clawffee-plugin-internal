@@ -1,3 +1,4 @@
+//@ts-check
 const { prettyPrepareStack } = require('./ErrorOverrides');
 const util = require('util');
 const { sharedServerData } = require('./SharedServerData');
@@ -5,6 +6,12 @@ sharedServerData.internal.log = {};
 
 const {basename, sep } = require('path');
 
+/**
+ * 
+ * @param {any[]} data 
+ * @param {string} prefix 
+ * @returns 
+ */
 function cleanData(data, prefix) {
     let str = "";
     data.forEach(v => {
@@ -24,7 +31,7 @@ function cleanData(data, prefix) {
                         }
                         let stack = v.stack;
                         if(!preparedStack) {
-                            stack = prettyPrepareStack(v, stack);
+                            stack = prettyPrepareStack(v, stack ?? "") ?? undefined;
                         }
                         if(!stack) {
                             Error.captureStackTrace(v, cleanData.caller);
@@ -33,6 +40,7 @@ function cleanData(data, prefix) {
                         Error.prepareStackTrace = oldPrepareStack;
                         str += stack;
                     } catch(e) {
+                        //@ts-ignore
                         str += `${v.constructor.name}: ${v.message}\n    at <unable to get stack trace> reason:` + e.stack;
                     }
                     break;
@@ -51,11 +59,24 @@ const logFile = fs.createWriteStream('log.txt');
 let ownPrefix = process.cwd().trim().length + 1;
 let longestName = 30;
 let longestLongName = 42;
+/**
+ * 
+ * @param {string} name 
+ * @param {(...values: any) => void} copy 
+ * @param {string} prefix 
+ * @param {boolean | number} skipcalls 
+ * @returns {(...data: any) => void}
+ */
 function wrapConsoleFunction(name, copy, prefix = "", skipcalls = false) {
     return (...data) => {
+        /**
+         * @type {(NodeJS.CallSite & {Overriden: boolean, FileName: string, LineNumber: number, ColumnNumber: number})[]}
+         */
+        //@ts-expect-error
         const callSites = util.getCallSites(10, {
             sourceMap: true
-        }).filter(v => v.FileName);
+        //@ts-ignore
+        }).filter(v => v.FileName ?? null);
         // if skiplines is true, first element is number of function calls to skip
         if(skipcalls) {
             callSites.splice(0, data[0]);

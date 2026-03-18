@@ -1,3 +1,4 @@
+//@ts-check
 require('./internal/Updater');
 console.log("\n Join the discord! \u001b[32;1;3;4mhttps://discord.gg/744T53nJFu\u001b[0m");
 

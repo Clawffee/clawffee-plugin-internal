@@ -1,6 +1,13 @@
+//@ts-check
 const fs = require('node:fs');
 const path = require('path');
 
+/**
+ * 
+ * @param {string} dir 
+ * @param {number} depth 
+ * @returns 
+ */
 function requirePluginsRecursively(dir, depth = 0) {
     if(depth == 1) {
         if(dir.endsWith('.bak') || dir.endsWith('.upd')) return;

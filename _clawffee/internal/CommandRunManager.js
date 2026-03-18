@@ -1,3 +1,4 @@
+//@ts-check
 /*
  ┌───────────────────┐
  │                   │
@@ -48,10 +49,17 @@ const { sharedServerData } = require('./SharedServerData');
  * @type {{[x: string]: Array<Function>}}
  */
 globalThis.clawffeeInternals.fileCleanupFuncs = {}
+/**
+ * @type {{[x: string]: {
+ * onLoad(path: string, str: string, initial: boolean): void, 
+ * onUnload(path: string): void,
+ * onRequire(path: string, str: string, initial: boolean): void,
+ * }}}
+ */
 globalThis.clawffeeInternals.fileManagers = {};
 
 try {
-    sharedServerData.internal.commands = JSON.parse(fs.readFileSync('config/internal/commands.json'));
+    sharedServerData.internal.commands = JSON.parse(fs.readFileSync('config/internal/commands.json').toString());
 } catch(e) {
     sharedServerData.internal.commands = {
         "name": "commands",
@@ -73,6 +81,19 @@ try {
         "childscripts": {}
     }
 }
+/**
+ * @typedef commandConfig
+ * @prop {string} name
+ * @prop {string?} sortname
+ * @prop {string?} img
+ * @prop {boolean} hidden
+ * @prop {boolean} disabled
+ * @prop {{[child: string]: commandConfig}} childfolders
+ * @prop {{[child: string]: {[L in Exclude<keyof commandConfig, 'childfolders' | 'childscripts'>]: commandConfig[L]}}} childscripts
+ */
+/**
+ * @type {commandConfig}
+ */
 const config = sharedServerData.internal.commands;
 clawffeeInternals.commandConfig = config;
 /**
@@ -103,6 +124,7 @@ let workingDirectory = process.cwd();
  * Loads the commands at a given path
  * @param {string} path 
  * @param {string} str 
+ * @param {boolean} initial
  */
 function loadCommand(path, str, initial) {
     console.log(`+ ${path}`);
@@ -134,8 +156,8 @@ function getCMDObject(path) {
     const folders = path.split(sep);
     let mgr = config;
     folders.shift();
-    while(folders.length > 1) {
-        const fname = folders.shift();
+    let fname;
+    while(fname = folders.shift()) {
         if(!mgr.childfolders[fname]) mgr.childfolders[fname] = {
             name: fname,
             sortname: null,
@@ -164,7 +186,7 @@ function runCommands(folder) {
     commandFolders.push(folder);
     hookToFolder(folder, (type, path, stats) => {
         const cmdobj = getCMDObject(path);
-        if(type == 'unlink') {
+        if(type == 'unlink' || !stats) {
             delete cmdobj.childfolders[basename(path)];
             delete cmdobj.childscripts[basename(path)];
         } else {

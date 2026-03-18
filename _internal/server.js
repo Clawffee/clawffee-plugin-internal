@@ -1,10 +1,11 @@
+//@ts-check
 const { associateFunctionWithFile } = require("./codeBinder");
 
 
 /**
  * @callback URLCallback
  * 
- * @param {import("bun").BunRequest} request
+ * @param {Request} request
  * @param {URL} url
  */
 
@@ -19,7 +20,7 @@ function setFunction(path, callback) {
     globalThis.clawffeeInternals.serverFunctions[path] = callback;
     return associateFunctionWithFile(() => {
         if (callback == globalThis.clawffeeInternals.serverFunctions[path])
-            globalThis.clawffeeInternals.serverFunctions[path] = null;
+            delete globalThis.clawffeeInternals.serverFunctions[path];
     });
 }
 

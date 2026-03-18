@@ -1,3 +1,4 @@
+//@ts-check
 const chokidar = require('chokidar');
 const fs = require('fs');
 const path = require('path')
@@ -7,10 +8,14 @@ const path = require('path')
  */
 /**
  * Run a callback whenever a file is updated in a folder (or subfolder)
- * @param {string[]} folder 
- * @param {(event: EventName | 'initial', path: string, stats?: fs.Stats | undefined)} fileUpdateCallback 
+ * @param {string} folder 
+ * @param {(event: EventName | 'initial', path: string, stats: fs.Stats | null, initial: boolean) => void} fileUpdateCallback 
  */
 function hookToFolder(folder, fileUpdateCallback) {
+    /**
+     * 
+     * @param {string} f 
+     */
     function readDir(f) {
         fs.readdir(f, (err, files) => {
             if(err) {
@@ -21,7 +26,7 @@ function hookToFolder(folder, fileUpdateCallback) {
                 const p = path.join(f,v);
                 const stat = fs.statSync(p);
                 if(stat.isFile()) {
-                    fileUpdateCallback('initial', p, stat);
+                    fileUpdateCallback('initial', p, stat, true);
                 } else if(stat.isDirectory()) {
                     readDir(p);
                 }
@@ -30,7 +35,7 @@ function hookToFolder(folder, fileUpdateCallback) {
     }
     readDir(folder);
     chokidar.watch(folder, {ignoreInitial: true}).on('all', (event, path, stat) => {
-        if(event == 'unlink') {
+        if(event == 'unlink' || !stat) {
             fileUpdateCallback(event, path, null, false);
         } else if(stat.isFile()) {
             fileUpdateCallback(event, path, stat, false);

@@ -1,10 +1,14 @@
-
+//@ts-check
 const { functionNames, functionFileNames, functionOverrides, fileInfo } = require('./CommandRunnerGlobals');
 const util = require('util');
 const fs = require('fs');
 const acorn = require("acorn");
 const acorn_walk = require("acorn-walk");
 
+/**
+ * 
+ * @returns {NodeJS.CallSite[]}
+ */
 globalThis.clawffeeInternals.getPrefixStack = () => {
     const oldPrepareStack = Error.prepareStackTrace;
     Error.prepareStackTrace = (err, stack) => {
@@ -12,31 +16,47 @@ globalThis.clawffeeInternals.getPrefixStack = () => {
     }
     const st = {};
     Error.captureStackTrace(st, globalThis.clawffeeInternals.getPrefixStack);
+    //@ts-ignore
     const stack = st.stack;
     Error.prepareStackTrace = oldPrepareStack;
     return stack;
 }
+/**
+ * @type {NodeJS.CallSite[]}
+ */
 let prefixStack = [];
+/**
+ * 
+ * @param {NodeJS.CallSite[]} stack 
+ */
 globalThis.clawffeeInternals.setPrefixStack = (stack = []) => {
     prefixStack = stack;
 }
 
+/**
+ * 
+ * @param {NodeJS.CallSite & {Overriden: boolean}} v 
+ * @returns 
+ */
 function overrideStack(v) {
     if(v.Overriden) return true;
-    let f = v.getFunctionName();
+    let f = v.getFunctionName() ?? "";
     const fileName = functionFileNames.get(f);
     if(!fileName) return false;
-    v.getFunctionName = () => functionNames.get(f);
-    v.getScriptNameOrSourceURL = () => functionNames.get(f);
+    v.getFunctionName = () => functionNames.get(f) ?? null;
+    v.getScriptNameOrSourceURL = () => functionNames.get(f) ?? null;
     v.getFileName = () => fileName;
-    const origColumn = v.getColumnNumber();
-    let column = undefined;
+    const origColumn = v.getColumnNumber() ?? 0;
+    /**
+     * @type {number}
+     */
+    let column;
     v.getColumnNumber = () => {
         if(column) return column;
         column = origColumn;
-        const insertions = fileInfo.get(fileName).insertions;
-        const line = v.getLineNumber();
-        (insertions[line] ?? []).forEach(ins => {
+        const insertions = fileInfo.get(fileName)?.insertions;
+        const line = v.getLineNumber() ?? 0;
+        (insertions?.[line] ?? []).forEach(ins => {
             if(ins.p > column) return;
             column = Math.max(column - ins.l, ins.p);
         });
@@ -44,7 +64,9 @@ function overrideStack(v) {
     }
     v.Overriden = true;
     for(let key in functionOverrides.get(fileName)) {
+        //@ts-ignore
         var val = v[key]();
+        //@ts-ignore
         v[key] = functionOverrides.get(fileName)[key].bind(v, val, f);
     }
     return true;
@@ -54,7 +76,8 @@ util.getCallSites = () => {
     const oldPrepareStack = Error.prepareStackTrace;
     Error.prepareStackTrace = (err, stack) => {
         stack = stack.concat(prefixStack);
-        return stack.map((v) => { 
+        return stack.map((v) => {
+            //@ts-ignore
             let override = overrideStack(v);
             return {
                 this: v.getThis(), // always undefined
@@ -85,17 +108,24 @@ util.getCallSites = () => {
     const err = {};
     let stack = "";
     Error.captureStackTrace(err, util.getCallSites);
+    //@ts-ignore
     stack = err.stack;
     Error.prepareStackTrace = oldPrepareStack;
     if(typeof stack != 'object') return [];
     return stack;
 }
 
-globalThis.clawffeeInternals.getRunningScriptName = (fn) => {
+/**
+ * 
+ * @param {Function?} fn 
+ * @returns 
+ */
+globalThis.clawffeeInternals.getRunningScriptName = (fn=null) => {
     const oldPrepareStack = Error.prepareStackTrace;
     Error.prepareStackTrace = (err, stack) => {
         stack = stack.concat(prefixStack);
         for(let x of stack) {
+            //@ts-ignore
             if(overrideStack(x)) {
                 return x.getFileName();
             }
@@ -104,6 +134,7 @@ globalThis.clawffeeInternals.getRunningScriptName = (fn) => {
     }
     const st = {};
     Error.captureStackTrace(st, fn ?? globalThis.clawffeeInternals.getRunningScriptName);
+    //@ts-ignore
     const stack = st.stack;
     Error.prepareStackTrace = oldPrepareStack;
     return stack;
@@ -128,10 +159,26 @@ const keyWordRegex = new RegExp("\\b(?:" + [
     "using", "var", "void", "volatile",
     "while", "with", "yield"
 ].reduce((p, v) => p + "|" + v) + ")\\b", 'gi');
+
+/**
+ * 
+ * @param {NodeJS.CallSite} s 
+ * @param {string} content 
+ * @param {number[]} linePos 
+ * @param {{[x: string]: {
+ *  s: number,
+ *  e: number,
+ *  v: string
+ * }[]}} notations 
+ * @returns 
+ */
 function beautifyCode(s, content, linePos, notations) {
-    const line = s.getLineNumber();
+    const line = s.getLineNumber() ?? 0;
+    /**
+     * @type {string[]}
+     */
     const lines = [];
-    const column = s.getColumnNumber();
+    const column = s.getColumnNumber() ?? 0;
     let offset = 0xFFFFFFFFFF;
     let errStr = "";
     for(let i = Math.max(1,line-4); i <= Math.min(linePos.length - 1, line+2); i++) {
@@ -148,11 +195,16 @@ function beautifyCode(s, content, linePos, notations) {
         offset = column - 32;
     }
 
+    /**
+     * 
+     * @param {number} i 
+     * @returns 
+     */
     function getPrettyLine(i) {
         /**
          * @type {string}
          */
-        let codeLine = lines.shift().substring(offset, offset + 64);
+        let codeLine = lines.shift()?.substring(offset, offset + 64) ?? "";
         if(codeLine.length == 64) {
             codeLine = codeLine.substring(0,61) + "...";
         }
@@ -180,8 +232,15 @@ function beautifyCode(s, content, linePos, notations) {
     return errStr;
 }
 
+/**
+ * 
+ * @param {Error} err 
+ * @param {NodeJS.CallSite[]} stack 
+ * @returns 
+ */
 Error.prepareStackTrace = (err, stack) => {
     stack.forEach(v => {
+        //@ts-ignore
         overrideStack(v)
     });
     return err.constructor.name + ": " + err.message + "\n    at " + stack.map(v => {
@@ -189,15 +248,18 @@ Error.prepareStackTrace = (err, stack) => {
     }).join("\n    at ");
 };
 
+/**
+ * 
+ * @param {Error} err 
+ * @param {NodeJS.CallSite[] | string} stack 
+ * @returns 
+ */
 function prettyPrepareStack(err, stack) {
     /**
-     * @type {NodeJSint.CallSite}
-     */ 
-    
-    // stack = origPrepareStack(err, stack); // TEMPORARY, fake preprocessed stack
-    
+     * @type {NodeJS.CallSite | undefined}
+     */
     let s = undefined;
-    let name = undefined;
+    let name;
     if(!stack) {
         return null;
     }
@@ -212,6 +274,7 @@ function prettyPrepareStack(err, stack) {
             const line = lines[i];
             const match = line.match(/^\s*at (.*) \(((.*):(\d+):(\d+)|(.*))\)/);
             if(match) {
+                //@ts-expect-error
                 stack.push({
                     getFunctionName: () => match[1],
                     getFileName: () => match[3],
@@ -225,6 +288,7 @@ function prettyPrepareStack(err, stack) {
 
     stack = stack.concat(prefixStack);
     stack.forEach(v => {
+        //@ts-ignore
         if(overrideStack(v))
             s = s ?? v;
     });
@@ -232,14 +296,24 @@ function prettyPrepareStack(err, stack) {
     if(!s) {
         return null;
     }
-    name = s.getFileName();
-    err.line = s.getLineNumber();
+    name = s.getFileName() ?? "";
+    //@ts-ignore
+    err.line = s.getLineNumber() ?? 0;
+    //@ts-ignore
     err.fileName = name;
-    err.column = s.getColumnNumber();
+    //@ts-ignore
+    err.column = s.getColumnNumber() ?? 0;
     let errStr = `\u001b[91;1m${err.constructor.name}\u001b[0m: ${err.message}\n\u001b[2D\u001b[0m│\n`;
     if(fs.existsSync(name) && fs.statSync(name).isFile()) {
         const content = fs.readFileSync(name).toString();
         const linePos = [{index: -1}, ...content.matchAll(new RegExp('\n', 'gi')), {index: content.length}, {index: content.length}].map(a => a.index + 1);
+        /**
+         * @type {{
+         *  s: number,
+         *  e: number,
+         *  v: string
+         * }[]}
+         */
         const notations = [];
         try {
             const parsedCode = acorn.parse(content, {
@@ -254,7 +328,7 @@ function prettyPrepareStack(err, stack) {
             acorn_walk.simple(parsedCode, {
                 Literal: (node, state) => {
                     const obj = {
-                        s: node.start, e: node.end
+                        s: node.start, e: node.end, v: ""
                     }
                     switch (typeof node.value) {
                         case 'string': obj.v = "\u001b[92m"; break;
@@ -267,8 +341,10 @@ function prettyPrepareStack(err, stack) {
                     notations.push(obj);
                 },
                 CallExpression: (node, state) => {
+                    //@ts-expect-error
                     if(node.callee.property) {
                         notations.push({
+                            //@ts-expect-error
                             s: node.callee.property.start, e: node.callee.property.end, v: "\u001b[96m"
                         });
                         return;
@@ -285,6 +361,14 @@ function prettyPrepareStack(err, stack) {
             });
         } catch(e) {
         }
+        /**
+         * @type {{[x: string | number]: {
+         *  s: number,
+         *  e: number,
+         *  l: number,
+         *  v: string
+         * }[]}}
+         */
         const cn = {};
         let previousLine = linePos.length-1;
         notations.sort((a,b) => b.s-a.s).forEach((v) => {
@@ -310,10 +394,10 @@ function prettyPrepareStack(err, stack) {
     }
     let start = stack.findIndex(i => i == s);
     if(start == -1) start = 0;
-    let totalSlices = 5 + stack.indexOf(x => x == start);
+    let totalSlices = 5 + start;
     for(let x = 0; x < totalSlices; x++) {
         if(!stack[x]) break;
-        if(stack[x+1]?.isToplevel() && stack[x+1]?.getFileName().startsWith('[')) {
+        if(stack[x+1]?.isToplevel() && stack[x+1]?.getFileName()?.startsWith('[')) {
             stack.splice(x+1, 1);
             stack[x].isToplevel = () => true;
         }

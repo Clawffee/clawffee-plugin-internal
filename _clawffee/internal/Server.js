@@ -1,6 +1,10 @@
+//@ts-check
 const { addListener } = require('./Subscribable.js');
 const { sharedServerData } = require('./SharedServerData.js');
 
+/**
+ * @type {Bun.Server<any>}
+ */
 const server = Bun.serve({
     port: 4444,
     hostname: "localhost",
@@ -24,7 +28,7 @@ const server = Bun.serve({
         }
     },
     fetch(req) {
-        let extradata = { data: {} }
+        let extradata = { data: { path: "" } }
         const url = new URL(req.url, 'http://localhost:4444');
         if(url.pathname == '/internal/')
             extradata.data.path = "internal";
@@ -33,6 +37,11 @@ const server = Bun.serve({
             return undefined;
         }
 
+        /**
+         * 
+         * @param {any} res 
+         * @returns 
+         */
         function wrapIncorrectData(res) {
             if(res instanceof Response) return res;
             if(typeof res == 'string') return new Response(res);
@@ -70,10 +79,7 @@ const server = Bun.serve({
     routes: {
         "/internal/dashboard/": () => {
             return new Promise((resolve) => {
-                if(bakedhtml) {
-                    resolve(new Response(bakedhtml, {headers: { "Content-Type": "text/html" }}));
-                }
-                awaiters.push(resolve);
+                console.warn('no dashboard yet!');
             });
         },
         "/internal/dashboard/images/undefined": (req) => {
@@ -108,6 +114,9 @@ addListener(sharedServerData, "", (path, newValue, oldValue) => {
     }
 });
 
+/**
+ * @type {{[x: string]: (req: Request, url: URL) => any | Promise<any>}}
+ */
 const functions = {};
 clawffeeInternals.serverFunctions = functions;
 

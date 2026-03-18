@@ -1,8 +1,14 @@
+//@ts-check
 /**
  * @typedef fileInfo
  * @prop {Set<string>} variables
  * @prop {Set<string>} functions
- * @prop {Set<any>} insertions
+ * @prop {{
+ *  p: number,
+ *  e: number,
+ *  v: string,
+ *  l: number
+ * }[][]} insertions
  * @prop {number[]} newLines
  */
 clawffeeInternals.commandGlobals = {

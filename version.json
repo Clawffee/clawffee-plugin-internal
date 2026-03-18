@@ -1,5 +1,13 @@
 {
     "url": "https://api.github.com/repos/Clawffee/clawffee-plugin-internal/releases/latest",
     "version": "0.8.1",
-    "hash": "dTODaFxBnsPIm0FiKdGVRmScDdIfmvVILlqv0Dlg3wc5ZK7smaNySWl35Q1X22Za/lb9q4gRlFaIfkkKaAH7qbmWKhzvyrthoRj+GeX+i7nrdeTbn8DnCWaZQhBNOACslFp3X9TP18thPM51TimSHmNgLu5saNWAxk/idH+qjMNkrmkWAKJ7rAqTjsDQ3rp2B3QxzwuMnYbLPaVRUzg90cPh6nOWSCbf0nf8hu3QDuXH8cVYA48x/P8KntayhNgtAVYqBNqDB5q8DVmu4eqc97299KChpTU9mCWI6ZfsX3X8aAOCrVQCzGUMBNLFFRcY/byb/3Mc0ONSlVoEhlnuGPY6NWlwHmzvcyy7YhS/NHMRhQ//s/i5lcuNjEWtz5TtgmBjxKMosoNgbLMW8yx4UVaXLIcfioHdMUd5XEZA6Xj6nEzpgvr2rYx0EIseJeDo5p9tIr82VPwyFlIPQ4U8I1O7xqqx4PG7+NJ5nKgjp51ZtdHcHvPuaPlAf9QIeCcYR1KwmiaxTyFoKuUbGEdTeWR+9gt1HTiw/ukL+4AK8vlYWr2pJ1rGgHJx3tuoeCiwx+FQVd/MI3DkLHcCpT/YtLT4rU1ofshhhtwKmb8uhrrAoyjIg+pOG8E84AX9FcWzYk2zoPfzAK9coK6px7/O7D3qr/eK6du3UYcswQPjUOk="
+    "dependencies": {
+        "builtin": {
+            "url": "https://api.github.com/repos/Clawffee/clawffee-plugin-builtin/releases/latest",
+            "update_file": "builtin.tar.gz",
+            "pub_key": "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAn4dyosEWji6TwLh7OxVL\nbbjOUl2ACT+K279vyojbGimJqgXjsfm650ElRyQbIM2024NM1Ns/1YsMUPOQknxg\nPRcXcAaAADbVINFByebGMudaJVnCkO+2nH1qtsxEOIpKDVGQgLZ+QNqCxxNXbPN+\nY7PAxRd6dlYfLeGIEgkslfTrIZ+R0KyCInTV7MkSVoYvxcN8aBu9tbTpxBDUBY8s\ny4H9eLC1aLjBRX8aCyNhHZhr2ms2vdVM4560gktNNGbRwl480SEQBbc09oZgHrZt\n1PlFH9wGJ8CMFQwsydtQ68UPcmh8QUL04qqij3F1n684hLwCDLi8+kN9SJnFgTPj\nBKioLJ2eQpW/E34B4DNOIcTvfTZD8A8aZsRgzsa0isk0Zam7VP/JzGvzgCIWL/pZ\nS6deyitQxpkc67ffaTemuTG2sTVw0uSiCDGJzSiwLv6CuB6xBRfPSkCkRTc9qAOW\nwxQVN73YgLBKWmx9uQ6aeG+kX1opoEDvbbwgYp595e+k2VVceCT7S6WqJq/S37EW\npmIHwEt5ORHSuyFYbSI7OV3zugIEkhTj7JqblAedHRyXpu2f1wDq2qyRYHofFmsj\n3E2OIPePrrtXOuayzMxYxDH90TELPaPdWGpKwNQbyMB/eC5v+CfC64bQmNsycXHn\n25yPvptKEMqOdqjBpcU7vYcCAwEAAQ==\n-----END PUBLIC KEY-----\n",
+            "version": "^0"
+        }
+    },
+    "hash": "OtyFVh6z60goO01c8BsfeR+NJLUWei1laMW86c9vxUTdHXanq1h9I3FrmHEEOq3BQGfmzNZZ7VIYiyZiWo8MO/gXWfcUkxE2yLYmD2dBoARHPj0MA8wbcRvRrzE2h1EONL45+Mz4Cgc9sNvgVCPrz/ESOu43jJkgD4na6pl01qG7eOSoNBm4VDYNQgFNwGzU28uiT/Ed80GznQCCX0WabgudQy4xFg2OAzaa82RX6i5tF5dBncgM18x9vdwzoRT68GFnFrfgPhZNPx+CXv5rFUPBxH7HQF0TkqtWHR/QzSGxuOSELqqMpZPDIZW64luUhTk4GIq9/627qBcz3EoWUIxvf5q4dRsoFdE5AMlIjILuUtmDam1WR7ahhKsqON4XB8uMHZOMtRJuLtJ7CzHUPsULeeEWOV+vwlOKlaiWNMbWsSI/y4O7UCa44CMSlBAfhQ8D81QTcEeoYBpYS/wcli3QCPRpFPIDaIRLcrG33PjI0ilKeIQlAZ4ShxSjY8oPhoSrFZsPaZuHl/jEjmQpWzfLrVkAZNhoCSHDVLQJwnhbk4HfvX2BIo1nWJfrPJwYnNsE7PNicaW2RAESv9HIKB03JD+8Y1xxjiQLpfdabk+Jaj2WUHwXLozTANq/UMi35zZP6X714mEmAROIuU/m9gMgvC/3WbmRGqtRMkh660w="
 }

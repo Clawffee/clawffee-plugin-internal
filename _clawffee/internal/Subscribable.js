@@ -1,3 +1,4 @@
+//@ts-check
 /*
 server: {                                               
 ┌►"a": {                                        
@@ -101,8 +102,9 @@ function splitString(path) {
  * @param {string} property 
  */
 function removeParent(value, parent, property) {
-    if(ParentDict.has(value)) {
-        ParentDict.set(value, ParentDict.get(value).filter(v => v[0] != parent || v[1] != property));
+    let v;
+    if(v = ParentDict.get(value)) {
+        ParentDict.set(value, v.filter(v => v[0] != parent || v[1] != property));
     }
 }
 /**
@@ -118,7 +120,7 @@ function addParent(value, parent, property) {
 /**
  * Get all the shortest path (if recursive) from an object to a server object
  * @param {Proxy} value 
- * @param {WeakSet} traveled
+ * @param {WeakSet<any>} traveled
  * @returns {[any, string[]][]}
  */
 function getAllParentPaths(value, traveled=new WeakSet()) {
@@ -137,6 +139,9 @@ function getAllParentPaths(value, traveled=new WeakSet()) {
 
     //recurse through parents and append their paths
     const parents = ParentDict.get(value) ?? [];
+    /**
+     * @type {[any, string[]][]}
+     */
     let result = [];
     parents.forEach(element => {
         const obj = element[0];
@@ -157,8 +162,10 @@ function getAllParentPaths(value, traveled=new WeakSet()) {
  * 
  * @param {ListenerData} listener 
  * @param {any} value 
+ * @param {any} oldValue
+ * @param {boolean?} initiallyset
  */
-function callChildren(listener, value, oldValue, initiallyset) {
+function callChildren(listener, value, oldValue, initiallyset = false) {
     listener.ownListeners.forEach((v, key) => {
         const nV = typeof value == 'object'?value[key]:undefined;
         const oV = typeof oldValue == 'object'?oldValue[key]:undefined;
@@ -184,8 +191,10 @@ let suppressAffected = false;
 /**
  * 
  * @param {any} obj 
+ * @param {any} property
+ * @param {any} originalValue
  */
-function callAllAffected(obj, property=null, originalValue) {
+function callAllAffected(obj, property=null, originalValue=undefined) {
     if(suppressAffected) {
         return;
     }
@@ -194,13 +203,18 @@ function callAllAffected(obj, property=null, originalValue) {
     parentPaths.forEach((value) => {
         let server = value[0];
         let listener = ListenerDict.get(server);
+        if(!listener) return;
         const initiallyset = listener.initialSet;
         listener.initialSet = false;
         let path = value[1];
         if(property)
             path.push(property);
-        while(listener && path.length) {
-            const curpath = path.shift();
+        /**
+         * @type {string}
+         */
+        let curpath;
+        //@ts-ignore
+        while(listener && (curpath = path.shift())) {
             // call parents that a child at path has changed
             (listener.ownListeners.get(curpath) ?? []).forEach(v => {
                 if(
@@ -225,7 +239,8 @@ function callAllAffected(obj, property=null, originalValue) {
 function createEmptyListener() {
     return {
         ownListeners: new Map(),
-        childListeners: new Map()
+        childListeners: new Map(),
+        initialSet: null
     }
 }
 

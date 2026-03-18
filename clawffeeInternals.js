@@ -67,7 +67,6 @@ module.exports = {
         } else {
             globalThis.clawffeeInternals.js.defaultFile.unshift(() => fn);
         }
-        console.log("added function to defaultFile", globalThis.clawffeeInternals.js.defaultFile);
     },
     addFileCleanupFunc(filename, fn) {
         globalThis.clawffeeInternals.fileCleanupFuncs[filename]?.push(fn);
