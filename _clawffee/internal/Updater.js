@@ -1,5 +1,23 @@
+//@ts-check
 const config = require('../../version.json');
 
+/**
+ * @typedef versionInfo
+ * @prop {string} url url where to catch the update
+ * @prop {string} version version name
+ * @prop {string} update_file file name of the update
+ * @prop {string} pub_key public key of the update hash
+ * @prop {string} hash version hash
+ * @prop {{[name: string]: versionInfo}} dependencies list of folders where to install dependency plugins
+ */
+
+/**
+ * 
+ * @param {*} module 
+ * @param {*} url 
+ * @param {*} pubKey 
+ * @returns {Promise<void|string>}
+ */
 function runUpdate(module, url, pubKey) {return new Promise((resolve, reject) => {
     const path = require('path');
     const { IncomingMessage } = require('http');
@@ -13,7 +31,8 @@ function runUpdate(module, url, pubKey) {return new Promise((resolve, reject) =>
     console.log(url);
     async function verifyDownload() {
         console.log(`finished inflating update ${module} at ${folderPath}`);
-        await new Promise(resolve, setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 500));
+        //@ts-ignore
         if(!globalThis.clawffeeInternals.launcher.verifyHash(folderPath, pubKey)) return reject('Hash of downloaded folder is incorrect!!!');
         try {
             fs.rmSync(`plugins/${module}.bak`, {force: true, recursive: true});
@@ -37,6 +56,7 @@ function runUpdate(module, url, pubKey) {return new Promise((resolve, reject) =>
      */
     function handleDownload(res) {
         if(res.statusCode == 302) {
+            //@ts-ignore
             https.get(res.headers.location, {
                 headers: {
                     "Accept": "application/octet-stream",
@@ -73,18 +93,21 @@ function runUpdate(module, url, pubKey) {return new Promise((resolve, reject) =>
         headers: {
             "Accept": "application/octet-stream",
             "X-GitHub-Api-Version": "2022-11-28"
-        }
+        },
     }, handleDownload);
 });}
 
+//@ts-ignore
 globalThis.clawffeeInternals.launcher.update_info.then((info) => {
     if(info.info.message) return console.warn('couldnt check for updates', info.info.message);
     if(!info.info.name || info.info.name === config.version) return;
+    //@ts-ignore
     const updateFile = info.info.assets.find(v => v.name === info.update_data.filename);
     if(!updateFile) return console.warn('upate for clawffee malformed!');
     console.log(`\n\u001b[32mUpdate available for clawffee! \u001b[0m${info.info.tag_name}\n\n\u001b[32mUpdate now at \u001b[0;1;3;4mhttp://localhost:4444/update/internal\u001b[0m\n\n${info.info.body}\n`);
     require('./Server').functions['/update/internal'] = async () => {
         try {
+            //@ts-ignore
             const ret = await globalThis.clawffeeInternals.launcher.runUpdate();
             if(ret) return console.error(ret);
             console.log('Please relaunch clawffee...');
@@ -96,54 +119,106 @@ globalThis.clawffeeInternals.launcher.update_info.then((info) => {
     }
 });
 
+/**
+ * 
+ * @param {string} path 
+ * @param {versionInfo} data 
+ * @returns 
+ */
+async function initUpdate(path, data) {
+    if(!data.url) return;
+    //@ts-expect-error
+    const update_file_name = data.update_file_name ?? path + '.tar.gz';
+    const res = await fetch(data.url);
+    if(res.status != 200) return console.warn('failed to check for updates for', path);
+    const update_info = await res.json();
+    if(update_info.name === data.version) return;
+    //@ts-expect-error
+    const updateFile = update_info.assets.find(v => v.name === update_file_name);
+    if(!updateFile) return console.warn(`update for plugin ${path} malformed!`);
+    console.log(`\n\u001b[32mUpdate available for plugin \u001b[0m${path}\u001b[32m! \u001b[0m${update_info.name}\n\n\u001b[32mUpdate now at \u001b[0;1;3;4mhttp://localhost:4444/update/${path}\u001b[0m\n\n${update_info.body}\n`);
+    require('./Server').functions['/update/' + path] = async () => {
+        try {
+            const ret = await runUpdate(path, updateFile.url, data.pub_key);
+            if(ret) return console.error(ret);
+            console.log('Please relaunch clawffee...');
+            prompt();
+            process.exit(0);
+        } catch(e) {
+            console.log(e);
+        }
+    }
+}
+
 const fs = require('fs');
 const path = require('path');
-fs.readdir('plugins', (err, paths) => {
-    if(err) return err;
-    paths.forEach(async (p) => {
-        if(p == 'internal') return;
-        const data = JSON.parse(fs.readFileSync(path.join('plugins', p, 'version.json')));
-        if(!data.url) return;
-        const update_file_name = data.update_file_name ?? p + '.tar.gz';
-        const res = await fetch(data.url);
-        if(res.status != '200') return console.warn('failed to check for updates for', p);
-        const update_info = await res.json();
-        if(update_info.name === data.version) return;
-        const updateFile = update_info.assets.find(v => v.name === update_file_name);
-        if(!updateFile) return console.warn(`update for plugin ${p} malformed!`);
-        console.log(`\n\u001b[32mUpdate available for plugin \u001b[0m${p}\u001b[32m! \u001b[0m${update_info.name}\n\n\u001b[32mUpdate now at \u001b[0;1;3;4mhttp://localhost:4444/update/${p}\u001b[0m\n\n${update_info.body}\n`);
-        require('./Server').functions['/update/' + p] = async () => {
-            try {
-                const ret = await runUpdate(p, updateFile.url, data.pub_key);
-                if(ret) return console.error(ret);
-                console.log('Please relaunch clawffee...');
-                prompt();
-                process.exit(0);
-            } catch(e) {
-                console.log(e);
-            }
+
+function verifyModules() {
+    const { promise, resolve, reject } = Promise.withResolvers();
+    /**
+     * @type {{dep: versionInfo, folder: string}[]}
+     */
+    const missingDeps = [];
+    const paths = fs.readdirSync('plugins');
+    paths.forEach((p) => {try {
+    if(p.endsWith('.upd') || p.endsWith('.bak')) return;
+    /**
+     * @type {versionInfo}
+     */
+    const data = JSON.parse(fs.readFileSync(path.join('plugins', p, 'version.json')).toString());
+    if(p != 'internal') initUpdate(p, data);
+    Object.keys(data.dependencies ?? {}).forEach(folder => {
+        folder = path.normalize(folder);
+        if(folder.startsWith('..') || path.isAbsolute(folder)) {
+            return;
         }
+        const dep = data.dependencies[folder];
+        if(fs.existsSync(path.join('plugins', folder))) {
+            if(!dep.version) {
+                return;
+            }
+            /**
+             * @type {versionInfo}
+             */
+            const otherdata = JSON.parse(fs.readFileSync(path.join('plugins', folder, 'version.json')).toString());
+            if(Bun.semver.satisfies(otherdata.version, dep.version)) return;
+        }
+        // Do version checking here
+        missingDeps.push({folder, dep: data.dependencies[folder]});
     });
-});
-
-
-if(!fs.existsSync('plugins/builtin')) {(async () => {
-    try {
-        const res = await fetch("https://api.github.com/repos/Clawffee/clawffee-plugin-builtin/releases/latest");
-        if(res.status != '200') return console.warn('failed to check for updates for', p);
+    } catch(e) {
+        console.error("failed to parse", p, e);
+        console.error("Exiting...");
+        process.exit(1);
+    }});
+    if(missingDeps.length == 0) {
+        return Promise.resolve(true);
+    }
+    console.log("\n\nThe following plugins need to be installed:\n\n");
+    missingDeps.forEach(dep => console.log("\u001b[33m" + dep.folder + "\u001b[0m available at \u001b[32;1;4m" + dep.dep.url + "\u001b[0m"))
+    prompt("\n\nPlease confirm...\n\n");
+    missingDeps.forEach(async (dep) => {
+        const res = await fetch(dep.dep.url, {
+            redirect: 'follow'
+        });
+        if(res.status != 200) return console.warn('failed to check for updates for', path);
         const update_info = await res.json();
-        const updateFile = update_info.assets.find(v => v.name === 'builtin.tar.gz');
-        const ret = await runUpdate("builtin", 
+        //@ts-ignore
+        const updateFile = update_info.assets.find(v => v.name === dep.dep.update_file);
+        const ret = await runUpdate(dep.folder, 
             updateFile.url,
-            "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAn4dyosEWji6TwLh7OxVL\nbbjOUl2ACT+K279vyojbGimJqgXjsfm650ElRyQbIM2024NM1Ns/1YsMUPOQknxg\nPRcXcAaAADbVINFByebGMudaJVnCkO+2nH1qtsxEOIpKDVGQgLZ+QNqCxxNXbPN+\nY7PAxRd6dlYfLeGIEgkslfTrIZ+R0KyCInTV7MkSVoYvxcN8aBu9tbTpxBDUBY8s\ny4H9eLC1aLjBRX8aCyNhHZhr2ms2vdVM4560gktNNGbRwl480SEQBbc09oZgHrZt\n1PlFH9wGJ8CMFQwsydtQ68UPcmh8QUL04qqij3F1n684hLwCDLi8+kN9SJnFgTPj\nBKioLJ2eQpW/E34B4DNOIcTvfTZD8A8aZsRgzsa0isk0Zam7VP/JzGvzgCIWL/pZ\nS6deyitQxpkc67ffaTemuTG2sTVw0uSiCDGJzSiwLv6CuB6xBRfPSkCkRTc9qAOW\nwxQVN73YgLBKWmx9uQ6aeG+kX1opoEDvbbwgYp595e+k2VVceCT7S6WqJq/S37EW\npmIHwEt5ORHSuyFYbSI7OV3zugIEkhTj7JqblAedHRyXpu2f1wDq2qyRYHofFmsj\n3E2OIPePrrtXOuayzMxYxDH90TELPaPdWGpKwNQbyMB/eC5v+CfC64bQmNsycXHn\n25yPvptKEMqOdqjBpcU7vYcCAwEAAQ==\n-----END PUBLIC KEY-----\n"
+            dep.dep.pub_key
         );
         if(ret) return console.error(ret);
-        console.log('\n\n\n\u001b[32mInstall Complete! Please relaunch clawffee...');
-        prompt();
-        process.exit(0);
-    } catch(e) {
-        console.log(e);
-    }
-})();}
+        let i = missingDeps.indexOf(dep);
+        if(i != missingDeps.length-1) missingDeps[i] = missingDeps.pop();
+        else missingDeps.pop();
+        if(missingDeps.length == 0) resolve(false);
+    });
+    return promise;
+}
+console.log(`\u001b[0m\n Clawffee Version \u001b[33;1m${config.version}\u001b[0m 🐾`);
 
-console.log(`\u001b[0m\n Clawffee Version ${config.version} 🐾`);
+module.exports = {
+    verifyModules
+}
