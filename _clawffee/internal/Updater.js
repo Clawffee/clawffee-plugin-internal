@@ -161,31 +161,32 @@ function verifyModules() {
     const missingDeps = [];
     const paths = fs.readdirSync('plugins');
     paths.forEach((p) => {try {
-    if(p.endsWith('.upd') || p.endsWith('.bak')) return;
-    /**
-     * @type {versionInfo}
-     */
-    const data = JSON.parse(fs.readFileSync(path.join('plugins', p, 'version.json')).toString());
-    if(p != 'internal') initUpdate(p, data);
-    Object.keys(data.dependencies ?? {}).forEach(folder => {
-        folder = path.normalize(folder);
-        if(folder.startsWith('..') || path.isAbsolute(folder)) {
-            return;
-        }
-        const dep = data.dependencies[folder];
-        if(fs.existsSync(path.join('plugins', folder))) {
-            if(!dep.version) {
+        if(p.endsWith('.upd') || p.endsWith('.bak')) return;
+        /**
+         * @type {versionInfo}
+         */
+        if(!fs.existsSync(path.join('plugins', p, 'version.json'))) return;
+        const data = JSON.parse(fs.readFileSync(path.join('plugins', p, 'version.json')).toString());
+        if(p != 'internal') initUpdate(p, data);
+        Object.keys(data.dependencies ?? {}).forEach(folder => {
+            folder = path.normalize(folder);
+            if(folder.startsWith('..') || path.isAbsolute(folder)) {
                 return;
             }
-            /**
-             * @type {versionInfo}
-             */
-            const otherdata = JSON.parse(fs.readFileSync(path.join('plugins', folder, 'version.json')).toString());
-            if(Bun.semver.satisfies(otherdata.version, dep.version)) return;
-        }
-        // Do version checking here
-        missingDeps.push({folder, dep: data.dependencies[folder]});
-    });
+            const dep = data.dependencies[folder];
+            if(fs.existsSync(path.join('plugins', folder))) {
+                if(!dep.version) {
+                    return;
+                }
+                /**
+                 * @type {versionInfo}
+                 */
+                const otherdata = JSON.parse(fs.readFileSync(path.join('plugins', folder, 'version.json')).toString());
+                if(Bun.semver.satisfies(otherdata.version, dep.version)) return;
+            }
+            // Do version checking here
+            missingDeps.push({folder, dep: data.dependencies[folder]});
+        });
     } catch(e) {
         console.error("failed to parse", p, e);
         console.error("Exiting...");
