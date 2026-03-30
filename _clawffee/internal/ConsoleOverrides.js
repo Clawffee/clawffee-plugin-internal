@@ -1,10 +1,13 @@
 //@ts-check
 const { prettyPrepareStack } = require('./ErrorOverrides');
 const util = require('util');
-const { sharedServerData } = require('./SharedServerData');
-sharedServerData.internal.log = {};
 
 const {basename, sep } = require('path');
+
+/**
+ * @type {{[key: string]: {func: (name: string, cleanedData: string, log: string, ...args: any) => void, readonly key: string, remove: () => void}}}
+ */
+const consoleHooks = {};
 
 /**
  * 
@@ -116,9 +119,6 @@ function wrapConsoleFunction(name, copy, prefix = "", skipcalls = false) {
         longestName = Math.max(longestName, Bun.stripANSI(smallname).length + 2);
         longestLongName = Math.max(longestLongName, Bun.stripANSI(fullname).length + 2);
         const cleaneddata = cleanData(data, prefix);
-        if(name != 'debug') {
-            sharedServerData.internal.log[name] = Bun.stripANSI(cleaneddata);
-        }
 
         logFile.write(Bun.stripANSI(
             new Date().toISOString().padEnd(longestLongName, " ")
@@ -131,7 +131,7 @@ function wrapConsoleFunction(name, copy, prefix = "", skipcalls = false) {
                 .reduce((p, v) => p + "\n".padEnd(longestLongName, " ") + "   ╎ " + v))
             + '\n'
         );
-        copy(
+        const logTxt = 
             prefix 
             + smallname
             + "".padEnd(longestName - Bun.stripANSI(smallname).length, " ") 
@@ -139,26 +139,24 @@ function wrapConsoleFunction(name, copy, prefix = "", skipcalls = false) {
             + prefix 
             + cleaneddata
                 .split("\n")
-                .reduce((p, v) => p + "\n".padEnd(longestName, " ") + "   ╎ " + v)
-        );
+                .reduce((p, v) => p + "\n".padEnd(longestName, " ") + "   ╎ " + v);
+        copy(logTxt);
+        Object.values(consoleHooks).forEach(v => {
+            try {
+                v.func(name, cleaneddata, logTxt, ...data);
+            } catch(e) {
+                logFile.write(String(e));
+                copy(String(e));
+            }
+        });
     }
 }
 
 const olddebug = console.debug;
-console.debug = wrapConsoleFunction("debug", olddebug, "\u001b[90m");
-
 const oldlog = console.log;
-console.log = wrapConsoleFunction("log", oldlog, "\u001b[0m");
-
-
 const oldinfo = console.info;
-console.info = wrapConsoleFunction("info", oldinfo, "\u001b[96m");
-
 const oldwarn = console.warn;
-console.warn = wrapConsoleFunction("warn", oldwarn, "\u001b[93m");
-
 const olderr = console.error;
-console.error = wrapConsoleFunction("error", olderr, "\u001b[91m");
 
 // Expose a version of console that skips internal calls
 module.exports = {
@@ -167,4 +165,31 @@ module.exports = {
     warn: wrapConsoleFunction("warn", oldwarn, "\u001b[93m", true),
     error: wrapConsoleFunction("error", olderr, "\u001b[91m", true),
     debug: wrapConsoleFunction("debug", olddebug, "\u001b[90m", true),
+    /**
+     * 
+     * @param {(name: string, cleanedData: string, log: string, ...args: any) => void} func 
+     */
+    addHook(func) {
+        if(typeof func != 'function') throw Error('Func is not a function');
+        const key = Bun.randomUUIDv7();
+        return consoleHooks[key] = {
+            func: func,
+            get key() {return key},
+            remove() { delete consoleHooks[key] },
+        }
+    },
+    /**
+     * 
+     * @param {string} key 
+     */
+    removeHook(key) {
+        delete consoleHooks[key];
+    },
+    bind() {
+        console.debug = wrapConsoleFunction("debug", olddebug, "\u001b[90m");
+        console.log = wrapConsoleFunction("log", oldlog, "\u001b[0m");
+        console.info = wrapConsoleFunction("info", oldinfo, "\u001b[96m");
+        console.warn = wrapConsoleFunction("warn", oldwarn, "\u001b[93m");
+        console.error = wrapConsoleFunction("error", olderr, "\u001b[91m");
+    }
 };

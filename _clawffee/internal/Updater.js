@@ -218,6 +218,7 @@ function verifyModules() {
     });
     return promise;
 }
+
 console.log(`\u001b[0m\n Clawffee Version \u001b[33;1m${config.version}\u001b[0m 🐾`);
 
 module.exports = {

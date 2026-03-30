@@ -1,7 +1,7 @@
 //@ts-check
 const { addListener } = require('./Subscribable.js');
 const { sharedServerData } = require('./SharedServerData.js');
-
+const { addHook } = require('./ConsoleOverrides.js');
 /**
  * @type {Bun.Server<any>}
  */
@@ -120,9 +120,16 @@ addListener(sharedServerData, "", (path, newValue, oldValue) => {
 const functions = {};
 clawffeeInternals.serverFunctions = functions;
 
-console.log(`server running on port ${server.port}`);
+sharedServerData.internal.log = {};
+addHook((name, cleanedData) => {
+    if(name != 'debug') {
+        sharedServerData.internal.log[name] = Bun.stripANSI(cleanedData);
+    }
+});
 
 module.exports = {
-    sharedServerData,
-    functions
+    functions,
+    config: {
+        port: 4444
+    }
 }

@@ -43,7 +43,6 @@ const fs = require('fs');
 const { hookToFolder } = require('./FSHookManager');
 const { join, sep, basename } = require('path')
 const { commandFolders } = require('./CommandRunnerGlobals');
-const { sharedServerData } = require('./SharedServerData');
 
 /**
  * @type {{[x: string]: Array<Function>}}
@@ -58,43 +57,50 @@ globalThis.clawffeeInternals.fileCleanupFuncs = {}
  */
 globalThis.clawffeeInternals.fileManagers = {};
 
-try {
-    sharedServerData.internal.commands = JSON.parse(fs.readFileSync('config/internal/commands.json').toString());
-} catch(e) {
-    sharedServerData.internal.commands = {
-        "name": "commands",
-        "sortname": null,
-        "img": null,
-        "hidden": false,
-        "disabled": false,
-        "childfolders": {
-            "examples": {
-                "name": "examples",
-                "sortname": null,
-                "img": null,
-                "hidden": true,
-                "disabled": true,
-                "childfolders": {},
-                "childscripts": {}
-            }
-        },
-        "childscripts": {}
-    }
-}
 /**
  * @typedef commandConfig
  * @prop {string} name
+ * @prop {string} fullname
  * @prop {string?} sortname
  * @prop {string?} img
  * @prop {boolean} hidden
  * @prop {boolean} disabled
+ * @prop {string[]} dependencies
+ * @prop {string[]} dependers
+ * @prop {string?} parent
  * @prop {{[child: string]: commandConfig}} childfolders
  * @prop {{[child: string]: {[L in Exclude<keyof commandConfig, 'childfolders' | 'childscripts'>]: commandConfig[L]}}} childscripts
  */
 /**
  * @type {commandConfig}
  */
-const config = sharedServerData.internal.commands;
+const config = fs.existsSync('config/internal/commands.json')? JSON.parse(fs.readFileSync('config/internal/commands.json').toString()): {
+    "name": "commands",
+    "fullname": "commands",
+    "sortname": null,
+    "img": null,
+    "hidden": false,
+    "disabled": false,
+    "dependencies": [],
+    "dependers": [],
+    "parent": null,
+    "childfolders": {
+        "examples": {
+            "name": "examples",
+            "fullname": "commands/examples",
+            "sortname": null,
+            "img": null,
+            "hidden": true,
+            "disabled": true,
+            "dependencies": [],
+            "dependers": [],
+            "parent": "commands",
+            "childfolders": {},
+            "childscripts": {}
+        }
+    },
+    "childscripts": {}
+}
 clawffeeInternals.commandConfig = config;
 /**
  * Unloads a commands at a given path
@@ -155,19 +161,24 @@ function loadCommand(path, str, initial) {
 function getCMDObject(path) {
     const folders = path.split(sep);
     let mgr = config;
-    folders.shift();
+    let prevname = folders.shift();
     let fname;
-    while(fname = folders.shift()) {
-        if(!mgr.childfolders[fname]) mgr.childfolders[fname] = {
+    while(folders.length > 1) {
+        fname = folders.shift() ?? "";
+        mgr = mgr.childfolders[fname] ??= {
             name: fname,
+            fullname: folders.join('/'),
             sortname: null,
             img: null,
+            parent: prevname ?? null,
+            dependencies: [],
+            dependers: [],
             hidden: false,
             disabled: false,
             childfolders: {},
             childscripts: {}
         };
-        mgr = mgr.childfolders[fname];
+        prevname = fname;
     }
     return mgr;
 }
@@ -194,10 +205,14 @@ function runCommands(folder) {
                 if(!cmdobj.childfolders[basename(path)]) {
                     cmdobj.childfolders[basename(path)] = {
                         "name": basename(path),
+                        "fullname": path,
                         "sortname": null,
                         "img": null,
                         "hidden": false,
                         "disabled": false,
+                        "dependencies": [],
+                        "dependers": [],
+                        "parent": cmdobj.fullname,
                         childfolders: {},
                         childscripts: {}
                     }
@@ -206,10 +221,14 @@ function runCommands(folder) {
                 if(!cmdobj.childscripts[basename(path)]) {
                     cmdobj.childscripts[basename(path)] = {
                         "name": basename(path),
+                        "fullname": path,
                         "sortname": null,
                         "img": null,
                         "hidden": false,
                         "disabled": false,
+                        "dependencies": [],
+                        "dependers": [],
+                        "parent": cmdobj.fullname
                     }
                 }
             }
@@ -234,5 +253,7 @@ function runCommands(folder) {
 }
 
 module.exports = {
-    runCommands
+    runCommands,
+    loadCommand,
+    unloadCommand
 }

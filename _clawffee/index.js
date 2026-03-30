@@ -1,5 +1,6 @@
 //@ts-check
 (async() => {
+    const { config: server} = require('./internal/Server');
     const updater = require('./internal/Updater');
     while(!await updater.verifyModules());
     console.log("\n Join the discord! \u001b[32;1;3;4mhttps://discord.gg/744T53nJFu\u001b[0m");
@@ -21,8 +22,8 @@
         console.error("Multiple Resolves!", type, reason);
     });
 
-    require('./internal/ConsoleOverrides');
-    require('./internal/Server');
+    require('./internal/ConsoleOverrides').bind();
+    console.info(`server running on port ${server.port}`);
     const {runCommands} = require('./internal/CommandRunManager');
     const { requirePluginsRecursively }  = require('./internal/PluginLoader');
     requirePluginsRecursively(require('path').join(process.cwd(), 'plugins'));
