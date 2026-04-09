@@ -1,5 +1,5 @@
 //@ts-check
-const config = require('../../version.json');
+const config = require('../../../version.json');
 
 /**
  * @typedef versionInfo

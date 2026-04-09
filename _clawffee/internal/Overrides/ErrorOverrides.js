@@ -1,5 +1,5 @@
 //@ts-check
-const { functionNames, functionFileNames, functionOverrides, fileInfo } = require('./CommandRunnerGlobals');
+const { functionNames, functionFileNames, functionOverrides, fileInfo } = require('../Commands/CommandRunnerGlobals');
 const util = require('util');
 const fs = require('fs');
 const acorn = require("acorn");
@@ -32,7 +32,6 @@ let prefixStack = [];
 globalThis.clawffeeInternals.setPrefixStack = (stack = []) => {
     prefixStack = stack;
 }
-
 /**
  * 
  * @param {NodeJS.CallSite & {Overriden: boolean}} v 

@@ -1,7 +1,7 @@
 //@ts-check
 const { addListener } = require('./Subscribable.js');
 const { sharedServerData } = require('./SharedServerData.js');
-const { addHook } = require('./ConsoleOverrides.js');
+const { addHook } = require('../Overrides/ConsoleOverrides.js');
 /**
  * @type {Bun.Server<any>}
  */

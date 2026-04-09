@@ -1,3 +1,5 @@
+//@ts-check
+
 const path = require('path');
 const fs = require('fs');
 const { fileManagers,  commandGlobals: {commandFolders}} = require('../clawffeeInternals');
@@ -14,13 +16,6 @@ class ModuleNotFoundError extends Error {
     constructor(modulePath) {
         super(`Module not found at path: ${modulePath}`);
         this.name = 'ModuleNotFoundError';
-    }
-}
-
-class ModuleLockedError extends Error {
-    constructor(modulePath) {
-        super(`Module is locked and cannot be required at path: ${modulePath}`);
-        this.name = 'ModuleLockedError';
     }
 }
 
@@ -105,7 +100,7 @@ globalThis.clawffeeInternals.js = {
 
 console.info("To start, create a .js file in the commands folder!");
 globalThis.clawffeeInternals.fileManagers['.js'] = {
-    onLoad(fullpath, data, initial) {
+    onLoad(fullpath, data, force) {
         if(!data.trim()) {
             data = globalThis.clawffeeInternals.js.defaultFile.map((v) => {try {return v(fullpath)} catch(e) {console.error(e); return '';}}).join('') + data;
             setTimeout(() => fs.writeFile(fullpath, data, (err) => {
@@ -114,7 +109,7 @@ globalThis.clawffeeInternals.fileManagers['.js'] = {
                 }
             }), 10);
         }
-        runAsFile(fullpath, data, initial);
+        runAsFile(fullpath, data, !force);
     },
     onRequire(fullpath, data) {
         return runAsFile(fullpath, data).exports;

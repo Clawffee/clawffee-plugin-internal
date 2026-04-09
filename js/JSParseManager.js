@@ -1,3 +1,5 @@
+//@ts-check
+
 const { functionNames, functionFileNames, functionOverrides, fileInfo } = clawffeeInternals.commandGlobals;
 
 const acorn = require("acorn");
