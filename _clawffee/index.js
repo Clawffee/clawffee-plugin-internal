@@ -24,7 +24,7 @@
 
     require('./internal/Overrides/ConsoleOverrides').bind();
     console.info(`server running on port ${server.port}`);
-    const {runCommands} = require('./internal/Commands/CommandRunManager');
+    const {runCommands} = require('./internal/Commands/CommandRunHelper');
     const { requirePluginsRecursively }  = require('./internal/Plugins/PluginLoader');
     requirePluginsRecursively(require('path').join(process.cwd(), 'plugins'));
 

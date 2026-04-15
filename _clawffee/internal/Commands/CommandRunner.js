@@ -24,9 +24,14 @@ globalThis.clawffeeInternals.fileManagers = {};
 
 /**
  * Unloads a commands at a given path
- * @param {string} path 
+ * @param {string | commandConfig} cmdObj
  */
-function unloadCommand(path) {
+function unloadCommand(cmdObj) {
+    if(typeof cmdObj == 'string') {
+        cmdObj = getCMDObject(cmdObj).childscripts[basename(cmdObj)];
+        if(!cmdObj) throw TypeError('There is no command defined at the given path!');
+    }
+    const path = cmdObj.fullname;
     const fullPath = join(workingDirectory, path);
     if(!globalThis.clawffeeInternals.fileCleanupFuncs[fullPath]) return;
     globalThis.clawffeeInternals.fileCleanupFuncs[fullPath].forEach((v) => {try {v()} catch(e) {console.error(e)}});
@@ -39,6 +44,7 @@ function unloadCommand(path) {
             console.error(e);
         }
     }
+        Object.values(hooks).forEach(v => {try {v.func(path, cmdObj, false)} catch(e) {console.error(e)}});
     console.log(`- ${path}`);
 }
 
@@ -64,6 +70,7 @@ function loadCommand(cmdObj, content, force=false) {
             cmdObj.errored = false;
             return ret;
         }
+        Object.values(hooks).forEach(v => {try {v.func(path, cmdObj, true)} catch(e) {console.error(e)}});
     } catch(err) {
         unloadCommand(path);
         cmdObj.errored = true;
@@ -71,7 +78,34 @@ function loadCommand(cmdObj, content, force=false) {
     }
 }
 
+/**
+ * @typedef hook
+ * @prop {(path: string, CMD: commandConfig, load: boolean) => void} func 
+ * @prop {string} key
+ * @prop {() => void} off
+ * @prop {() => void} on
+ * @prop {() => void} remove
+ * @prop {() => void} add
+ * @prop {() => void} subscribe
+ * @prop {() => void} unsubscribe
+ */
+/**
+ * @type {{[key: string]: hook}}
+ */
+const hooks = {
+};
+
+/**
+ * 
+ * @param {(path: string, CMD: commandConfig, load: boolean) => void} callback
+ * @returns {hook} 
+ */
+function onChange(callback) {
+    
+}
+
 module.exports = {
     unloadCommand,
-    loadCommand
+    loadCommand,
+    onChange
 }

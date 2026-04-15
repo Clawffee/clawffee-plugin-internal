@@ -84,13 +84,21 @@ function getCMDObject(path) {
     return mgr;
 }
 
-const hooks = {
-    /**
-     * @type {{[key: string]: {func: (name: string, cleanedData: string, log: string, ...args: any) => void, readonly key: string, remove: () => void}}}
-     */
-    unload: {},
-    load: {}
-}
+/**
+ * @typedef hook
+ * @prop {(path: string, CMD: commandConfig) => void} func 
+ * @prop {string} key
+ * @prop {() => void} off
+ * @prop {() => void} on
+ * @prop {() => void} remove
+ * @prop {() => void} add
+ * @prop {() => void} subscribe
+ * @prop {() => void} unsubscribe
+ */
+/**
+ * @type {{[key: string]: hook}}
+ */
+const hooks = {}
 
 /**
  * 
@@ -99,26 +107,49 @@ const hooks = {
  */
 function changeCommandConfig(path, update) {
     const cmd = getCMDObject(path);
+    path = cmd.fullname;
     cmd.sortname = update.sortname ?? cmd.sortname;
     cmd.img = update.img ?? cmd.img;
     cmd.hidden = update.hidden ?? cmd.hidden;
     if(update.disabled !== undefined) {
-        if(cmd.disabled != update.disabled) {
-            
-        }
+        const updateDeps = cmd.disabled != update.disabled;
         cmd.disabled = update.disabled;
+        if(updateDeps) {
+            //TODO: implement
+        }
     }
+    Object.values(hooks).forEach(v => {try {v.func(path, cmd)} catch(e) {console.error(e)}})
 }
 
 /**
  * 
- * @param {() => void} callback 
+ * @param {(path: string, CMD: commandConfig) => void} callback 
  */
 function subToCommandChanges(callback) {
-    
+    const key = Bun.randomUUIDv7();
+    function on() {
+        hooks[key] = mgr;
+    }
+    function off() {
+        delete hooks[key];
+    }
+    /**
+     * @type {hook}
+     */
+    const mgr = {
+        func: callback,
+        get key() {return key},
+        on: on,
+        off: off,
+        add: on,
+        remove: off,
+        subscribe: on,
+        unsubscribe: off
+    }
 }
 
 module.exports = {
     getCMDObject,
-    changeCommandConfig
+    changeCommandConfig,
+    subToCommandChanges
 }

@@ -44,7 +44,7 @@ const { hookToFolder } = require('./FSHookManager');
 const { basename } = require('path');
 const { commandFolders } = require('./CommandRunnerGlobals');
 const { unloadCommand, loadCommand } = require('./CommandRunner');
-const { getCMDObject } = require('./CommandConfig');
+const { getCMDObject, subToCommandChanges } = require('./CommandConfig');
 
 /**
  * Recursively loads and reloads commands in the given folder
@@ -119,6 +119,21 @@ function runCommands(folder) {
         });
     });
 }
+
+/**
+ * @type {Set<string>}
+ */
+const loadedCommands = new Set();
+
+subToCommandChanges((path, CMD) => {
+    if(CMD.disabled == loadedCommands.has(path)) {
+        if(CMD.disabled) {
+            unloadCommand(CMD)
+        } else {
+            loadCommand(CMD, )
+        }
+    }
+})
 
 module.exports = {
     runCommands,
