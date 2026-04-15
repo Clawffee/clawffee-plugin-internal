@@ -43,7 +43,7 @@ const fs = require('fs');
 const { hookToFolder } = require('./FSHookManager');
 const { basename } = require('path');
 const { commandFolders } = require('./CommandRunnerGlobals');
-const { unloadCommand, loadCommand } = require('./CommandRunner');
+const { unloadCommand, loadCommand, onChange } = require('./CommandRunner');
 const { getCMDObject, subToCommandChanges } = require('./CommandConfig');
 
 /**
@@ -130,13 +130,29 @@ subToCommandChanges((path, CMD) => {
         if(CMD.disabled) {
             unloadCommand(CMD)
         } else {
-            loadCommand(CMD, )
+            loadCommand(CMD, fs.readFileSync(CMD.fullname).toString(), false)
         }
     }
 })
 
+onChange((path, cmdObj, isLoad) => {
+    if(isLoad) {
+        if(loadedCommands.has(path)) {
+            console.log(`⮔ ${path}`);
+        } else {
+            console.log(`+ ${path}`);
+        }
+        loadedCommands.add(path);
+    } else {
+        console.log(`- ${path}`);
+        loadedCommands.delete(path);
+    }
+}) 
+
 module.exports = {
     runCommands,
     loadCommand,
-    unloadCommand
+    unloadCommand,
+    subToCommandChanges,
+    onCommandLoad: onChange
 }

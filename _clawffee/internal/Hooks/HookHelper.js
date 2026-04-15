@@ -18,13 +18,19 @@
 /**
  * @type {symbol}
  */
-//@ts-ignore
-const sym = new Symbol();
+const sym = Symbol();
 
 /**
- * @template {(...args: any) => any} T
+ * @template {(...args: any) => void} T
+ * @typedef HookHelper
+ * @prop {(callback: T) => hook<T>} create
+ * @prop {(...args: Parameters<T>) => any[]} call
  */
-function createHookMgr() {
+/**
+ * @template {(...args: any) => void} T
+ * @returns 
+ */
+function simpleHookMgr() {
     /**
      * @type {{[key: string]: hook<T>}}
      */
@@ -83,4 +89,4 @@ function createHookMgr() {
     return {create: createHook, call: callHooks}
 }
 
-module.exports = {createHookMgr}
+module.exports = {simpleHookMgr}

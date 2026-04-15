@@ -2,6 +2,7 @@
 
 const { sep } = require('path');
 const fs = require('fs');
+const { simpleHookMgr } = require('../Hooks/HookHelper');
 
 const confPath = 'config/internal/commands.json';
 
@@ -84,21 +85,7 @@ function getCMDObject(path) {
     return mgr;
 }
 
-/**
- * @typedef hook
- * @prop {(path: string, CMD: commandConfig) => void} func 
- * @prop {string} key
- * @prop {() => void} off
- * @prop {() => void} on
- * @prop {() => void} remove
- * @prop {() => void} add
- * @prop {() => void} subscribe
- * @prop {() => void} unsubscribe
- */
-/**
- * @type {{[key: string]: hook}}
- */
-const hooks = {}
+const {create: subToCommandChanges, call: callHooks} = /**@type {import('../Hooks/HookHelper').HookHelper<(path: string, cmdObj: commandConfig) => void>} */ (simpleHookMgr());
 
 /**
  * 
@@ -118,34 +105,7 @@ function changeCommandConfig(path, update) {
             //TODO: implement
         }
     }
-    Object.values(hooks).forEach(v => {try {v.func(path, cmd)} catch(e) {console.error(e)}})
-}
-
-/**
- * 
- * @param {(path: string, CMD: commandConfig) => void} callback 
- */
-function subToCommandChanges(callback) {
-    const key = Bun.randomUUIDv7();
-    function on() {
-        hooks[key] = mgr;
-    }
-    function off() {
-        delete hooks[key];
-    }
-    /**
-     * @type {hook}
-     */
-    const mgr = {
-        func: callback,
-        get key() {return key},
-        on: on,
-        off: off,
-        add: on,
-        remove: off,
-        subscribe: on,
-        unsubscribe: off
-    }
+    callHooks(path, cmd).filter(Boolean).forEach(console.error);
 }
 
 module.exports = {

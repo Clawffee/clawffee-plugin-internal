@@ -1,6 +1,7 @@
 //@ts-check
 const { join, basename } = require('path');
 const { getCMDObject } = require('./CommandConfig');
+const { simpleHookMgr } = require('../Hooks/HookHelper');
 
 /**
  * @import {commandConfig} from "./CommandConfig"
@@ -44,7 +45,7 @@ function unloadCommand(cmdObj) {
             console.error(e);
         }
     }
-        Object.values(hooks).forEach(v => {try {v.func(path, cmdObj, false)} catch(e) {console.error(e)}});
+    callHooks(path, cmdObj, false).filter(Boolean).forEach(console.error);
     console.log(`- ${path}`);
 }
 
@@ -60,7 +61,6 @@ function loadCommand(cmdObj, content, force=false) {
         if(!cmdObj) throw TypeError('There is no command defined at the given path!');
     }
     const path = cmdObj.fullname;
-    console.log(`+ ${path}`);
     const fullPath = join(workingDirectory, path);
     try {
         for (const ending in globalThis.clawffeeInternals.fileManagers) {
@@ -68,9 +68,9 @@ function loadCommand(cmdObj, content, force=false) {
             const mgr = globalThis.clawffeeInternals.fileManagers[ending];
             const ret = (mgr.onLoad ?? mgr.onRequire)?.(fullPath, content, force, cmdObj);
             cmdObj.errored = false;
+            callHooks(path, cmdObj, true).filter(Boolean).forEach(console.error);
             return ret;
         }
-        Object.values(hooks).forEach(v => {try {v.func(path, cmdObj, true)} catch(e) {console.error(e)}});
     } catch(err) {
         unloadCommand(path);
         cmdObj.errored = true;
@@ -78,31 +78,7 @@ function loadCommand(cmdObj, content, force=false) {
     }
 }
 
-/**
- * @typedef hook
- * @prop {(path: string, CMD: commandConfig, load: boolean) => void} func 
- * @prop {string} key
- * @prop {() => void} off
- * @prop {() => void} on
- * @prop {() => void} remove
- * @prop {() => void} add
- * @prop {() => void} subscribe
- * @prop {() => void} unsubscribe
- */
-/**
- * @type {{[key: string]: hook}}
- */
-const hooks = {
-};
-
-/**
- * 
- * @param {(path: string, CMD: commandConfig, load: boolean) => void} callback
- * @returns {hook} 
- */
-function onChange(callback) {
-    
-}
+const {create: onChange, call: callHooks} = /**@type {import('../Hooks/HookHelper').HookHelper<(path: string, cmdObj: commandConfig, isLoad: boolean) => void>} */ (simpleHookMgr());
 
 module.exports = {
     unloadCommand,
