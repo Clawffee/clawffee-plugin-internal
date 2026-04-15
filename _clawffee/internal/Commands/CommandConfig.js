@@ -54,7 +54,6 @@ const config = fs.existsSync(confPath)? JSON.parse(fs.readFileSync(confPath).toS
 }
 clawffeeInternals.commandConfig = config;
 
-
 /**
  * 
  * @param {string} path 
@@ -89,6 +88,16 @@ const {create: subToCommandChanges, call: callHooks} = /**@type {import('../Hook
 
 /**
  * 
+ * @param {commandConfig} cmdObj 
+ * @param {Set<string>} cache 
+ */
+function updateLocked(cmdObj, cache=new Set()) {
+    cmdObj.locked = cmdObj.disabled;
+    //TODO: make this system lock other files aswell
+}
+
+/**
+ * 
  * @param {string} path 
  * @param {{sortname?: string, img?: string, hidden?: boolean, disabled?: boolean}} update 
  */
@@ -102,10 +111,13 @@ function changeCommandConfig(path, update) {
         const updateDeps = cmd.disabled != update.disabled;
         cmd.disabled = update.disabled;
         if(updateDeps) {
-            //TODO: implement
+            updateLocked(cmd);
         }
     }
     callHooks(path, cmd).filter(Boolean).forEach(console.error);
+    fs.writeFile(confPath, JSON.stringify(config), (err) => {
+        console.error("Could not save config");
+    });
 }
 
 module.exports = {
