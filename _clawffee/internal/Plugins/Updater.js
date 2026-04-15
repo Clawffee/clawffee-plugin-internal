@@ -105,7 +105,7 @@ globalThis.clawffeeInternals.launcher.update_info.then((info) => {
     const updateFile = info.info.assets.find(v => v.name === info.update_data.filename);
     if(!updateFile) return console.warn('upate for clawffee malformed!');
     console.log(`\n\u001b[32mUpdate available for clawffee! \u001b[0m${info.info.tag_name}\n\n\u001b[32mUpdate now at \u001b[0;1;3;4mhttp://localhost:4444/update/internal\u001b[0m\n\n${info.info.body}\n`);
-    require('./Server').functions['/update/internal'] = async () => {
+    require('../Server/Server').functions['/update/internal'] = async () => {
         try {
             //@ts-ignore
             const ret = await globalThis.clawffeeInternals.launcher.runUpdate();
@@ -137,7 +137,7 @@ async function initUpdate(path, data) {
     const updateFile = update_info.assets.find(v => v.name === update_file_name);
     if(!updateFile) return console.warn(`update for plugin ${path} malformed!`);
     console.log(`\n\u001b[32mUpdate available for plugin \u001b[0m${path}\u001b[32m! \u001b[0m${update_info.name}\n\n\u001b[32mUpdate now at \u001b[0;1;3;4mhttp://localhost:4444/update/${path}\u001b[0m\n\n${update_info.body}\n`);
-    require('./Server').functions['/update/' + path] = async () => {
+    require('../Server/Server').functions['/update/' + path] = async () => {
         try {
             const ret = await runUpdate(path, updateFile.url, data.pub_key);
             if(ret) return console.error(ret);
@@ -212,6 +212,7 @@ function verifyModules() {
         );
         if(ret) return console.error(ret);
         let i = missingDeps.indexOf(dep);
+        //@ts-ignore
         if(i != missingDeps.length-1) missingDeps[i] = missingDeps.pop();
         else missingDeps.pop();
         if(missingDeps.length == 0) resolve(false);

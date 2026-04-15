@@ -1,6 +1,10 @@
 //@ts-check
-const fs = require('fs');
-const { join, sep, basename } = require('path');
+const { join, basename } = require('path');
+const { getCMDObject } = require('./CommandConfig');
+
+/**
+ * @import {commandConfig} from "./CommandConfig"
+ */
 
 let workingDirectory = process.cwd();
 
@@ -17,84 +21,6 @@ globalThis.clawffeeInternals.fileCleanupFuncs = {}
  */
 globalThis.clawffeeInternals.fileManagers = {};
 
-/**
- * @typedef commandConfig
- * @prop {string} name
- * @prop {string} fullname
- * @prop {string?} sortname
- * @prop {string?} img
- * @prop {boolean} hidden
- * @prop {boolean} disabled
- * @prop {boolean} locked
- * @prop {boolean} errored
- * @prop {string[]} dependencies
- * @prop {string[]} dependers
- * @prop {?string} parent
- */
-/**
- * @typedef {{childscripts: {[child: string]: commandConfig}, childfolders: {[child: string]: folderConfig}} & commandConfig} folderConfig
- */
-/**
- * @type {folderConfig}
- */
-const config = fs.existsSync('config/internal/commands.json')? JSON.parse(fs.readFileSync('config/internal/commands.json').toString()): {
-    "name": "commands",
-    "fullname": "commands",
-    "sortname": null,
-    "img": null,
-    "hidden": false,
-    "disabled": false,
-    "dependencies": [],
-    "dependers": [],
-    "childfolders": {
-        "examples": {
-            "name": "examples",
-            "fullname": "commands/examples",
-            "sortname": null,
-            "img": null,
-            "hidden": true,
-            "disabled": true,
-            "dependencies": [],
-            "dependers": [],
-            "parent": "commands",
-            "childfolders": {},
-            "childscripts": {}
-        }
-    },
-    "childscripts": {}
-}
-clawffeeInternals.commandConfig = config;
-
-
-/**
- * 
- * @param {string} path 
- * @returns 
- */
-function getCMDObject(path) {
-    const folders = path.split(sep);
-    let mgr = config;
-    let fname;
-    while(folders.length > 1) {
-        fname = folders.shift() ?? "";
-        mgr = mgr.childfolders[fname] ??= {
-            name: fname,
-            fullname: folders.join('/'),
-            sortname: null,
-            img: null,
-            parent: mgr.name,
-            dependencies: [],
-            dependers: [],
-            hidden: false,
-            disabled: false,
-            errored: false,
-            locked: mgr.locked,
-            childfolders: {},
-            childscripts: {}
-        };
-    }
-    return mgr;
-}
 
 /**
  * Unloads a commands at a given path
@@ -115,6 +41,7 @@ function unloadCommand(path) {
     }
     console.log(`- ${path}`);
 }
+
 /**
  * Loads the commands at a given path
  * @param {commandConfig | string} cmdObj file path
@@ -146,6 +73,5 @@ function loadCommand(cmdObj, content, force=false) {
 
 module.exports = {
     unloadCommand,
-    loadCommand,
-    getCMDObject
+    loadCommand
 }

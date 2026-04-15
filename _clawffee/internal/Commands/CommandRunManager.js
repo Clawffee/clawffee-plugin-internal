@@ -43,15 +43,8 @@ const fs = require('fs');
 const { hookToFolder } = require('./FSHookManager');
 const { basename } = require('path');
 const { commandFolders } = require('./CommandRunnerGlobals');
-const { unloadCommand, loadCommand, getCMDObject } = require('./CommandRunner');
-
-const hooks = {
-    /**
-     * @type {{[key: string]: {func: (name: string, cleanedData: string, log: string, ...args: any) => void, readonly key: string, remove: () => void}}}
-     */
-    unload: {},
-    load: {}
-}
+const { unloadCommand, loadCommand } = require('./CommandRunner');
+const { getCMDObject } = require('./CommandConfig');
 
 /**
  * Recursively loads and reloads commands in the given folder
@@ -125,15 +118,6 @@ function runCommands(folder) {
             loadCommand(cmdobj.childscripts[basename(path)], data.toString(), type != 'initial');
         });
     });
-}
-
-/**
- * 
- * @param {string} path 
- * @param {{sortname?: string, img?: string, hidden?: boolean, disabled?: boolean}} update 
- */
-function changeCommandConfig(path, update) {
-    
 }
 
 module.exports = {
