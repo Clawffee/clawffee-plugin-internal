@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clawffee — Dashboard</title>
+    <link href="../../../node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet">
+    <style>
+        .terminal {
+            position: relative;
+            align-content: end;
+            height: 20vh;
+            width: 100vw;
+            overflow: scroll;
+            font-family: monospace;
+            &::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                height: 32px;
+                left: 0;
+                right: 0;
+                background: linear-gradient(180deg, var(--bs-tertiary-bg), transparent);
+                z-index: 1;
+            }
+            & table {
+                table-layout: fixed;
+                width: 100vw;
+                align-content: start;
+                & tr {
+                    --text-color: var(--bs-tertiary-color);
+                    & td:nth-child(odd) {
+                        width: min-content;
+                        border-right: 2px solid var(--text-color);
+                        text-align: start;
+                        max-width: 30vw;
+                        overflow-x: hidden;
+                    }
+                    & td {
+                        width: auto;
+                        padding-left: 4px;
+                        padding-right: 4px;
+                        vertical-align:top;
+                    }
+                    &:nth-child(odd) {
+                        background-color: #ffffff06;
+                    }
+                }
+            }
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            * {
+                scroll-behavior: smooth;
+            }
+        }
+    </style>
+    <script>
+        const consoleCache = [];
+        /**
+         * @type {HTMLElement}
+         */
+        let consoleWindow;
+        /**
+         * @param {string} name
+         * @param {string} cls
+         * @param {string} text
+         */
+        function addToConsole(name, cls, text) {
+            if(!consoleWindow) return consoleCache.push({name, cls, text});
+            consoleWindow.innerHTML += `<tr><td></td><td></td></tr>`
+            consoleWindow.lastChild.firstChild.textContent = name.replaceAll(" "," ");
+            consoleWindow.lastChild.lastChild.textContent = text;
+            if(cls) consoleWindow.lastElementChild.setAttribute('style', `--text-color:${cls}`);
+            if(consoleWindow.childElementCount > 200) {
+                consoleWindow.removeChild(consoleWindow.firstChild);
+                consoleWindow.removeChild(consoleWindow.firstChild);
+            }
+            consoleWindow.lastElementChild.scrollIntoView();
+        }
+        window.onload = () => {
+            consoleWindow = document.getElementById("consoleWindow");
+            let v;
+            while(v = consoleCache.shift()) addToConsole(v.name, v.cls, v.text);
+        };
+        function wrapCons(name, cls) {
+            const bak = console[name];
+            console[name] = (...data) => {
+                bak(...data);
+                addToConsole("UI", cls, ...data.map(JSON.stringify));
+            }
+        }
+        wrapCons('info', "var(--bs-primary)");
+        wrapCons('error', "var(--bs-danger)");
+        wrapCons('warn', "var(--bs-warning)");
+        wrapCons('log', null);
+        setInterval(() => {
+            console.log('meow')
+        }, 1000);
+        console.error('bark');
+        console.warn('awoof');
+    </script>
+    <script src="Connect.js"></script>
+</head>
+<body data-bs-theme="dark">
+    <nav class="navbar fixed-bottom navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+            <h5>Terminal</h5>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+        <div class="terminal bg-body mt-2">
+            <table>
+                <tbody id="consoleWindow">
+                </tbody>
+            </table>
+        </div>
+    </nav>
+    <div style="height: 10000px;"></div>
+    <script src="../../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

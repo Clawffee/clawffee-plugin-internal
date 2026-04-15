@@ -3,6 +3,7 @@
 const { sep } = require('path');
 const fs = require('fs');
 const { simpleHookMgr } = require('../Hooks/HookHelper');
+const { sharedServerData } = require('../Server/SharedServerData');
 
 const confPath = 'config/internal/commands.json';
 
@@ -23,10 +24,7 @@ const confPath = 'config/internal/commands.json';
 /**
  * @typedef {{childscripts: {[child: string]: commandConfig}, childfolders: {[child: string]: folderConfig}} & commandConfig} folderConfig
  */
-/**
- * @type {folderConfig}
- */
-const config = fs.existsSync(confPath)? JSON.parse(fs.readFileSync(confPath).toString()): {
+const config = sharedServerData.internal.commandConfig = /**@type {folderConfig} **/ (fs.existsSync(confPath)? JSON.parse(fs.readFileSync(confPath).toString()): {
     "name": "commands",
     "fullname": "commands",
     "sortname": null,
@@ -51,7 +49,7 @@ const config = fs.existsSync(confPath)? JSON.parse(fs.readFileSync(confPath).toS
         }
     },
     "childscripts": {}
-}
+})
 clawffeeInternals.commandConfig = config;
 
 /**
