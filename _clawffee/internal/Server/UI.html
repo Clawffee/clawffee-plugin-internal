@@ -6,13 +6,21 @@
     <title>Clawffee — Dashboard</title>
     <link href="../../../node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet">
     <style>
+        body {
+            font-size: 90%;
+        }
         .terminal {
             position: relative;
             align-content: end;
             height: 20vh;
             width: 100vw;
-            overflow: scroll;
+            overflow: none scroll;
             font-family: monospace;
+            font-size: 80%;
+        }
+        #consoleWindow {
+            display: grid;
+            grid-template-columns: min-content auto;
             &::after {
                 content: "";
                 position: absolute;
@@ -23,28 +31,32 @@
                 background: linear-gradient(180deg, var(--bs-tertiary-bg), transparent);
                 z-index: 1;
             }
-            & table {
-                table-layout: fixed;
-                width: 100vw;
-                align-content: start;
-                & tr {
-                    --text-color: var(--bs-tertiary-color);
-                    & td:nth-child(odd) {
-                        width: min-content;
-                        border-right: 2px solid var(--text-color);
-                        text-align: start;
-                        max-width: 30vw;
-                        overflow-x: hidden;
-                    }
-                    & td {
-                        width: auto;
-                        padding-left: 4px;
-                        padding-right: 4px;
-                        vertical-align:top;
-                    }
-                    &:nth-child(odd) {
-                        background-color: #ffffff06;
-                    }
+            &>* {
+                box-sizing: content-box;
+                overflow: hidden;
+                padding-left: 4px;
+                padding-right: 4px;
+                vertical-align:top;
+                --text-color: var(--bs-tertiary-color);
+                &:nth-child(odd) {
+                    border-right: 2px solid var(--text-color);
+                    text-align: start;
+                    max-width: 30vw;
+                    overflow-x: hidden;
+                    word-break: keep-all;
+                    white-space: nowrap;
+                    display: flex;
+                    overflow: hidden;
+                    flex-wrap: wrap;
+                }
+                &:nth-child(even) {
+                    word-break: break-all;
+                    line-break: anywhere;
+                    text-wrap-mode: wrap;
+                    text-wrap-style: pretty;
+                }
+                &:nth-child(4n + 1), &:nth-child(4n + 2) {
+                    background-color: #ffffff06;
                 }
             }
         }
@@ -60,18 +72,30 @@
          * @type {HTMLElement}
          */
         let consoleWindow;
+        const windowURL = /[^\/]*.$/.exec(window.location.href)[0];
         /**
          * @param {string} name
          * @param {string} cls
          * @param {string} text
          */
-        function addToConsole(name, cls, text) {
-            if(!consoleWindow) return consoleCache.push({name, cls, text});
-            consoleWindow.innerHTML += `<tr><td></td><td></td></tr>`
-            consoleWindow.lastChild.firstChild.textContent = name.replaceAll(" "," ");
-            consoleWindow.lastChild.lastChild.textContent = text;
-            if(cls) consoleWindow.lastElementChild.setAttribute('style', `--text-color:${cls}`);
+        function addToConsole(name, line, cls, text) {
+            if(!consoleWindow) return consoleCache.push({name, line, cls, text});
+            const nameobj = document.createElement('div');
+            nameobj.appendChild(document.createElement('div'));
+            nameobj.appendChild(document.createElement('div'));
+            nameobj.firstChild.innerText = name;
+            nameobj.lastChild.innerText = line;
+            const textobj = document.createElement('div');
+            textobj.innerText = text;
+            if(cls) {
+                textobj.style.setProperty('--text-color', cls);
+                nameobj.style.setProperty('--text-color', cls);
+            }
+            consoleWindow.appendChild(nameobj);
+            consoleWindow.appendChild(textobj);
             if(consoleWindow.childElementCount > 200) {
+                consoleWindow.removeChild(consoleWindow.firstChild);
+                consoleWindow.removeChild(consoleWindow.firstChild);
                 consoleWindow.removeChild(consoleWindow.firstChild);
                 consoleWindow.removeChild(consoleWindow.firstChild);
             }
@@ -80,24 +104,26 @@
         window.onload = () => {
             consoleWindow = document.getElementById("consoleWindow");
             let v;
-            while(v = consoleCache.shift()) addToConsole(v.name, v.cls, v.text);
+            while(v = consoleCache.shift()) addToConsole(v.name, v.line, v.cls, v.text);
         };
         function wrapCons(name, cls) {
             const bak = console[name];
             console[name] = (...data) => {
-                bak(...data);
-                addToConsole("UI", cls, ...data.map(JSON.stringify));
+                const stack = {};
+                Error.captureStackTrace(stack, console[name]);
+                const line = /([^\/]*.)(:\d+:\d+)$/.exec(stack.stack.split('\n')[0]);
+                let n = line?.[1];
+                if(n?.startsWith(windowURL)) {
+                    n = "UI" + n.substring(windowURL.length);
+                }
+                bak(line, ...data);
+                addToConsole(n ?? "[unknown]", line?.[2] ?? "", cls, data.map(v => (typeof v == 'object')?JSON.stringify(v):String(v)).join('\n'));
             }
         }
         wrapCons('info', "var(--bs-primary)");
         wrapCons('error', "var(--bs-danger)");
         wrapCons('warn', "var(--bs-warning)");
-        wrapCons('log', null);
-        setInterval(() => {
-            console.log('meow')
-        }, 1000);
-        console.error('bark');
-        console.warn('awoof');
+        wrapCons('log', "var(--bs-tertiary-color)");
     </script>
     <script src="Connect.js"></script>
 </head>
@@ -110,10 +136,7 @@
             </button>
         </div>
         <div class="terminal bg-body mt-2">
-            <table>
-                <tbody id="consoleWindow">
-                </tbody>
-            </table>
+            <div id="consoleWindow"></div>
         </div>
     </nav>
     <div style="height: 10000px;"></div>

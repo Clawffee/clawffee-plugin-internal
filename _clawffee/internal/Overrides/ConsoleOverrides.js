@@ -26,6 +26,10 @@ function cleanData(data, prefix) {
             case 'object':
                 if(v instanceof Error) {
                     try {
+                        if(v.prettystack) {
+                            str += v.prettystack;
+                            break;
+                        }
                         const oldPrepareStack = Error.prepareStackTrace;
                         let preparedStack = false;
                         Error.prepareStackTrace = (err, stack) => {
@@ -38,7 +42,7 @@ function cleanData(data, prefix) {
                         }
                         if(!stack) {
                             Error.captureStackTrace(v, cleanData.caller);
-                            stack = v.stack;
+                            stack = v.stack + "\nlog Stack not error stack!";
                         }
                         Error.prepareStackTrace = oldPrepareStack;
                         str += stack;

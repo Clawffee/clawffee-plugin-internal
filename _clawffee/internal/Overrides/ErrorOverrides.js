@@ -5,6 +5,7 @@ const fs = require('fs');
 const acorn = require("acorn");
 const acorn_walk = require("acorn-walk");
 
+Error.stackTraceLimit = 100;
 /**
  * 
  * @returns {NodeJS.CallSite[]}
@@ -260,7 +261,7 @@ function prettyPrepareStack(err, stack) {
     let s = undefined;
     let name;
     if(!stack) {
-        return null;
+        return "No known stack";
     }
     if(typeof stack == 'string') {
         if(stack.startsWith('\u001b[')) {
@@ -411,6 +412,20 @@ function prettyPrepareStack(err, stack) {
 }
 globalThis.clawffeeInternals.prettyPrepareStack = prettyPrepareStack;
 
+const ebak = Error;
+class Err extends ebak {
+    /**
+     * 
+     * @param {string} message 
+     * @param {any} options
+     */
+    constructor(message, options) {
+        super(message, options);
+        this.captureStackTrace(this);
+        //TODO: this breaks a lot
+    }
+};
+Error = Err
 module.exports = {
     prettyPrepareStack
 };
