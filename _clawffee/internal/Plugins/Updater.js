@@ -99,7 +99,6 @@ function runUpdate(module, url, pubKey) {return new Promise((resolve, reject) =>
 
 //@ts-ignore
 globalThis.clawffeeInternals.launcher.update_info.then((info) => {
-    console.log(info);
     if(!info) return console.warn('couldnt check for updates');
     if(info.info.message) return console.warn('couldnt check for updates', info.info.message);
     if(!info.info.name || info.info.name === config.version) return;

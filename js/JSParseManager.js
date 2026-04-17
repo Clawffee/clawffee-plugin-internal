@@ -62,9 +62,16 @@ function applyOverrides(filename, codeStr, parsedCode, newLinePositions) {
         ForOfStatement: whileWrapper,
         FunctionDeclaration: (node, state) => {
             const funcstr = addVariable(filename, "function_name", codeStr);
-            inverseCommands.push([node.start, () => `let ${node.id.name} = globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},`]);
-            inverseCommands.push([node.id.start, () => `${funcstr}_`]);
-            inverseCommands.push([node.end, () => `,"${node.id.name}")`]);
+            if(node.id) {
+                inverseCommands.push([node.start, () => `let ${node.id.name} = globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},`]);
+                inverseCommands.push([node.id.start, () => `${funcstr}_`]);
+                inverseCommands.push([node.end, () => `,"${node.id.name}")`]);
+            } else {
+                const params = node.params.map(v => codeStr.substring(v.start, v.end)).join(', ');
+                inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params})/*`]);
+                inverseCommands.push([node.body.start, () => `*/`]);
+                inverseCommands.push([node.end, () => `)`]);
+            }
         },
         Property: (node, state) => {
             if(node.value.type != 'FunctionExpression') return;
@@ -75,13 +82,17 @@ function applyOverrides(filename, codeStr, parsedCode, newLinePositions) {
         },
         FunctionExpression: (node, state) => {
             const funcstr = addVariable(filename, "function_name", codeStr);
-            inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},{${funcstr}:`]);
-            inverseCommands.push([node.end, () => `}.${funcstr})`]);
+            const params = node.params.map(v => codeStr.substring(v.start, v.end)).join(', ');
+            inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params})/*`]);
+            inverseCommands.push([node.body.start, () => `*/`]);
+            inverseCommands.push([node.end, () => `)`]);
         },
         ArrowFunctionExpression: (node, state) => {
             const funcstr = addVariable(filename, "function_name", codeStr);
-            inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},{${funcstr}:`]);
-            inverseCommands.push([node.end, () => `}.${funcstr})`]);
+            const params = node.params.map(v => codeStr.substring(v.start, v.end)).join(', ');
+            inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params})/*`]);
+            inverseCommands.push([node.body.start, () => `*/`]);
+            inverseCommands.push([node.end, () => `)`]);
         },
     });
     const insertions = {};
@@ -101,6 +112,7 @@ function applyOverrides(filename, codeStr, parsedCode, newLinePositions) {
 
         codeStr = codeStr.substring(0,v[0]) + insertTxt + codeStr.substring(v[0]);
     });
+    if(clawffeeInternals.verbose) console.info(filename, "mapped to", codeStr);
     return {
         editedCode: codeStr,
         insertions: insertions
@@ -109,11 +121,14 @@ function applyOverrides(filename, codeStr, parsedCode, newLinePositions) {
 
 /**
  * Add a function with overriden variables to use in the error log
- * @param {string} filename fake file name to assign to the function
- * @param {Function} fn the function to have its data overriden
+ * @param {string} name fake file name to assign to the function
+ * @param {Function | {[name: string]: Function}} fn the function to have its data overriden
  * @param {string} fakename the name to use for function.name
  */
 globalThis.clawffeeInternals.addFunction = (name, fn, fakename) => {
+    if(typeof fn == 'object') {
+        fn = Object.values(fn)[0];
+    }
     /**
      * @type {string}
      */

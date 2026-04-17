@@ -26,10 +26,6 @@ function cleanData(data, prefix) {
             case 'object':
                 if(v instanceof Error) {
                     try {
-                        if(v.prettystack) {
-                            str += v.prettystack;
-                            break;
-                        }
                         const oldPrepareStack = Error.prepareStackTrace;
                         let preparedStack = false;
                         Error.prepareStackTrace = (err, stack) => {

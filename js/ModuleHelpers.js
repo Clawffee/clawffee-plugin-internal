@@ -83,12 +83,9 @@ function runAsFile(fullpath, funcStr, keepCache) {
     globalThis.clawffeeInternals.fileCleanupFuncs[fullpath] = [];
     const mod = createModule(fullpath);
     mod.isPreloading = mod.isPreloading;
-    try {
-        const func = wrapCode(fullpath, funcStr);
-        func.bind(globalThis)(mod.exports, mod.require, mod, fullpath, path.dirname(fullpath));
-    } catch(e) {
-        throw e;
-    }
+    const func = wrapCode(fullpath, funcStr);
+    if(!func) return null;
+    func.bind(globalThis)(mod.exports, mod.require, mod, fullpath, path.dirname(fullpath));
     mod.loaded = true;
     require.cache[fullpath] = mod;
     return mod;
@@ -107,7 +104,7 @@ globalThis.clawffeeInternals.fileManagers['.js'] = {
                 if(err) {
                     console.error(err);
                 }
-            }), 10);
+            }), 50);
         }
         runAsFile(fullpath, data, !force);
     },

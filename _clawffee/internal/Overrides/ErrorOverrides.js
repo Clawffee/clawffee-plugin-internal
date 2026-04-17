@@ -412,20 +412,7 @@ function prettyPrepareStack(err, stack) {
 }
 globalThis.clawffeeInternals.prettyPrepareStack = prettyPrepareStack;
 
-const ebak = Error;
-class Err extends ebak {
-    /**
-     * 
-     * @param {string} message 
-     * @param {any} options
-     */
-    constructor(message, options) {
-        super(message, options);
-        this.captureStackTrace(this);
-        //TODO: this breaks a lot
-    }
-};
-Error = Err
+require('./CustomErrorCls');
 module.exports = {
     prettyPrepareStack
 };

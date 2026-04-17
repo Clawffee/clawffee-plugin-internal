@@ -1,5 +1,5 @@
 const skipConsole = require('./ConsoleOverrides');
-
+globalThis.clawffeeInternals.verbose = true;
 globalThis.Map = class MapVerbose extends Map {
     constructor(...args) {
         super(...args);
