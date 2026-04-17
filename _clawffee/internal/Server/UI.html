@@ -14,7 +14,7 @@
             align-content: end;
             height: 20vh;
             width: 100vw;
-            overflow: none scroll;
+            overflow: hidden scroll;
             font-family: monospace;
             font-size: 80%;
         }
@@ -111,7 +111,7 @@
             console[name] = (...data) => {
                 const stack = {};
                 Error.captureStackTrace(stack, console[name]);
-                const line = /([^\/]*.)(:\d+:\d+)$/.exec(stack.stack.split('\n')[0]);
+                const line = stack.stack.split('\n').map(v => /([^\/]*.)(:\d+:\d+)$/.exec(v)).filter(Boolean)[0];
                 let n = line?.[1];
                 if(n?.startsWith(windowURL)) {
                     n = "UI" + n.substring(windowURL.length);
