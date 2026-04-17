@@ -68,8 +68,8 @@ function applyOverrides(filename, codeStr, parsedCode, newLinePositions) {
                 inverseCommands.push([node.end, () => `,"${node.id.name}")`]);
             } else {
                 const params = node.params.map(v => codeStr.substring(v.start, v.end)).join(', ');
-                inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params})/*`]);
-                inverseCommands.push([node.body.start, () => `*/`]);
+                inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params}) {(`]);
+                inverseCommands.push([node.body.start+1, () => `});`]);
                 inverseCommands.push([node.end, () => `)`]);
             }
         },
@@ -83,15 +83,15 @@ function applyOverrides(filename, codeStr, parsedCode, newLinePositions) {
         FunctionExpression: (node, state) => {
             const funcstr = addVariable(filename, "function_name", codeStr);
             const params = node.params.map(v => codeStr.substring(v.start, v.end)).join(', ');
-            inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params})/*`]);
-            inverseCommands.push([node.body.start, () => `*/`]);
+            inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params}) {(`]);
+            inverseCommands.push([node.body.start+1, () => `});`]);
             inverseCommands.push([node.end, () => `)`]);
         },
         ArrowFunctionExpression: (node, state) => {
             const funcstr = addVariable(filename, "function_name", codeStr);
             const params = node.params.map(v => codeStr.substring(v.start, v.end)).join(', ');
-            inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params})/*`]);
-            inverseCommands.push([node.body.start, () => `*/`]);
+            inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params}) {(`]);
+            inverseCommands.push([node.body.start+1, () => `});`]);
             inverseCommands.push([node.end, () => `)`]);
         },
     });
