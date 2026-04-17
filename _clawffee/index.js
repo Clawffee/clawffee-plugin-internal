@@ -13,10 +13,10 @@
 
     // Global error handlers
     process.on('uncaughtException', (err) => {
-        console.error("Uncaught Error!", err);
+        console.error("Uncaught Error!\n", err);
     });
     process.on('unhandledRejection', (reason, promise) => {
-        console.error("Unhandled Rejection!", "reason:", reason);
+        console.error("Unhandled Rejection!", reason);
     });
     process.on('multipleResolves', (type, promise, reason) => {
         console.error("Multiple Resolves!", type, reason);

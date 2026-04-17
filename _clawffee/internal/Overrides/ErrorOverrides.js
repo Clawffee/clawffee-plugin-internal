@@ -255,13 +255,16 @@ Error.prepareStackTrace = (err, stack) => {
  * @returns 
  */
 function prettyPrepareStack(err, stack) {
+    if(err.code != null && err.path != null && err.errno != null) {
+        return `\u001b[91;1m${err.constructor.name}\u001b[0m: ${err.message}\n\u001b[2D\u001b[0m│\n    Tried to access: ${err.path}\n    Returned ErrNo: ${err.errno}`
+    }
     /**
      * @type {NodeJS.CallSite | undefined}
      */
     let s = undefined;
     let name;
     if(!stack) {
-        return "No known stack";
+        return null;
     }
     if(typeof stack == 'string') {
         if(stack.startsWith('\u001b[')) {
@@ -412,7 +415,6 @@ function prettyPrepareStack(err, stack) {
 }
 globalThis.clawffeeInternals.prettyPrepareStack = prettyPrepareStack;
 
-require('./CustomErrorCls');
 module.exports = {
     prettyPrepareStack
 };

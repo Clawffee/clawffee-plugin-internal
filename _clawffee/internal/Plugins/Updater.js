@@ -98,7 +98,13 @@ function runUpdate(module, url, pubKey) {return new Promise((resolve, reject) =>
 });}
 
 //@ts-ignore
+globalThis.clawffeeInternals.launcher.update_info.catch((err) => {
+    console.warn('couldnt check for updates');
+});
 globalThis.clawffeeInternals.launcher.update_info.then((info) => {
+    if(typeof info == 'string') {
+        return console.warn(info);
+    }
     if(!info) return console.warn('couldnt check for updates');
     if(info.info.message) return console.warn('couldnt check for updates', info.info.message);
     if(!info.info.name || info.info.name === config.version) return;
@@ -130,7 +136,12 @@ async function initUpdate(path, data) {
     if(!data.url) return;
     //@ts-expect-error
     const update_file_name = data.update_file_name ?? path + '.tar.gz';
-    const res = await fetch(data.url);
+    let res;
+    try {
+        res = await fetch(data.url);
+    } catch(e) {
+        return console.warn('failed to check for updates for', path)
+    }
     if(res.status != 200) return console.warn('failed to check for updates for', path);
     const update_info = await res.json();
     if(update_info.name === data.version) return;

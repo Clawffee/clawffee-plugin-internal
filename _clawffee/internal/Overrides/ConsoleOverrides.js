@@ -38,7 +38,7 @@ function cleanData(data, prefix) {
                         }
                         if(!stack) {
                             Error.captureStackTrace(v, cleanData.caller);
-                            stack = v.stack + "\nlog Stack not error stack!";
+                            stack = v.stack + "\n    \u001b[31m!! log Stack not error stack!";
                         }
                         Error.prepareStackTrace = oldPrepareStack;
                         str += stack;
