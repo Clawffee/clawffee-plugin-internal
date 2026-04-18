@@ -46,7 +46,6 @@ function unloadCommand(cmdObj) {
         }
     }
     callHooks(path, cmdObj, false).filter(Boolean).forEach(console.error);
-    console.log(`- ${path}`);
 }
 
 /**

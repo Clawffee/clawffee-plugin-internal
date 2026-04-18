@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clawffee — Dashboard</title>
+    <link href="../../../../node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet">
+    <style>
+        body {
+            font-size: 90%;
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            * {
+                scroll-behavior: smooth;
+            }
+        }
+    </style>
+    <meta clawffee_url="localhost:4444/internal/">
+    <script src="Connect.js"></script>
+</head>
+
+<body data-bs-theme="dark">
+    <nav class="navbar fixed-bottom bg-body-tertiary">
+        <div class="container-fluid">
+            <h5>Terminal</h5>
+            <style>
+                .terminal {
+                    position: relative;
+                    align-content: end;
+                    height: 30vh;
+                    width: 100vw;
+                    overflow: hidden;
+                    font-family: monospace;
+                    font-size: 80%;
+                    &::after {
+                        content: "";
+                        position: absolute;
+                        top: 0;
+                        height: 32px;
+                        left: 0;
+                        right: 0;
+                        background: linear-gradient(180deg, var(--bs-tertiary-bg), transparent);
+                        z-index: 10;
+                    }
+                    &>* {
+                        z-index: -1;
+                    }
+                }
+
+                #consoleWindow {
+                    max-height: 30vh;
+                    overflow: hidden scroll;
+                    display: grid;
+                    grid-template-columns: min-content auto;
+
+                    &>* {
+                        box-sizing: content-box;
+                        padding-left: 4px;
+                        padding-right: 4px;
+                        vertical-align: top;
+                        --text-color: var(--bs-tertiary-color);
+
+                        &:nth-child(odd) {
+                            border-right: 2px solid var(--text-color);
+                            text-align: start;
+                            max-width: 30vw;
+                            overflow-x: hidden;
+                            overflow-y: visible;
+                            word-break: keep-all;
+                            white-space: nowrap;
+                            display: flex;
+                            overflow: hidden;
+                            flex-wrap: wrap;
+                            z-index: 2;
+                        }
+
+                        &:nth-child(even) {
+                            word-break: break-all;
+                            line-break: anywhere;
+                            text-wrap-mode: wrap;
+                            text-wrap-style: pretty;
+                            z-index: 1;
+                            overflow-x: visible;
+                            padding-left: calc(1ch + 3px);
+                        }
+
+                        &:nth-child(4n + 1),
+                        &:nth-child(4n + 2) {
+                            background-color: #ffffff06;
+                        }
+                    }
+                }
+            </style>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+        <div class="terminal bg-body mt-2">
+            <div id="consoleWindow"></div>
+        </div>
+        <script src="TerminalUI.js">
+        </script>
+    </nav>
+    <div style="height: 10000px;"></div>
+    <script src="../../../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

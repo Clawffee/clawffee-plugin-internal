@@ -1,4 +1,5 @@
 //@ts-check
+const keyGen = (typeof Bun !== 'undefined')?Bun.randomUUIDv7:() => Math.random().toString();
 /**
  * @template {Function} T
  * @typedef hook
@@ -57,7 +58,7 @@ function simpleHookMgr() {
      * @returns {hook<T>}
      */
     function createHook(callback) {
-        const key = Bun.randomUUIDv7();
+        const key = keyGen();
         const mgr = {
             func: callback,
             get key() {return key},

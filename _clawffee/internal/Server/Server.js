@@ -18,6 +18,7 @@ const server = Bun.serve({
                     p: [],
                     v: sharedServerData
                 }));
+                return;
             } else {
                 ws.send(JSON.stringify({
                     p: [],
@@ -104,7 +105,7 @@ addListener(sharedServerData, "", (path, newValue, oldValue) => {
     if (path[0] == 'internal') {
         server.publish('internal', JSON.stringify({
             v: newValue,
-            p: path
+            p: path.slice(1)
         }));
     } else {
         server.publish('all', JSON.stringify({
@@ -121,9 +122,9 @@ const functions = {};
 clawffeeInternals.serverFunctions = functions;
 
 sharedServerData.internal.log = {};
-addHook((name, cleanedData) => {
+addHook(({type: name, cleaneddata, smallname}) => {
     if(name != 'debug') {
-        sharedServerData.internal.log[name] = Bun.stripANSI(cleanedData);
+        sharedServerData.internal.log[name] = {smallname, cleaneddata};
     }
 });
 

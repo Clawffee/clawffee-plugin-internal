@@ -4,10 +4,7 @@ const util = require('util');
 
 const {basename, sep } = require('path');
 
-/**
- * @type {{[key: string]: {func: (name: string, cleanedData: string, log: string, ...args: any) => void, readonly key: string, remove: () => void}}}
- */
-const consoleHooks = {};
+const {create, call} = /**@type {import('../Hooks/HookHelper').HookHelper<(data: {smallname: string, fullname: string, cleaneddata: string, logTxt: string, type: string}) => void>}**/ (require('../Hooks/HookHelper').simpleHookMgr());
 
 /**
  * 
@@ -141,13 +138,12 @@ function wrapConsoleFunction(name, copy, prefix = "", skipcalls = false) {
                 .split("\n")
                 .reduce((p, v) => p + "\n".padEnd(longestName, " ") + "   ╎ " + v);
         copy(logTxt);
-        Object.values(consoleHooks).forEach(v => {
-            try {
-                v.func(name, cleaneddata, logTxt, ...data);
-            } catch(e) {
-                logFile.write(String(e));
-                copy(String(e));
-            }
+        call({
+            smallname, 
+            fullname, 
+            cleaneddata, 
+            logTxt, 
+            type: name
         });
     }
 }
@@ -165,26 +161,7 @@ module.exports = {
     warn: wrapConsoleFunction("warn", oldwarn, "\u001b[93m", true),
     error: wrapConsoleFunction("error", olderr, "\u001b[91m", true),
     debug: wrapConsoleFunction("debug", olddebug, "\u001b[90m", true),
-    /**
-     * 
-     * @param {(name: string, cleanedData: string, log: string, ...args: any) => void} func 
-     */
-    addHook(func) {
-        if(typeof func != 'function') throw Error('Func is not a function');
-        const key = Bun.randomUUIDv7();
-        return consoleHooks[key] = {
-            func: func,
-            get key() {return key},
-            remove() { delete consoleHooks[key] },
-        }
-    },
-    /**
-     * 
-     * @param {string} key 
-     */
-    removeHook(key) {
-        delete consoleHooks[key];
-    },
+    addHook: create,
     bind() {
         console.debug = wrapConsoleFunction("debug", olddebug, "\u001b[90m");
         console.log = wrapConsoleFunction("log", oldlog, "\u001b[0m");
