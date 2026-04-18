@@ -111,6 +111,7 @@ function adjustState(output, txt, consoleState) {
             if(isNaN(parseInt(reg[1]))) break;
             consoleState.curCol -= parseInt(reg[1]);
             break;
+        //TODO: add more states
     }
     insertTxt(output, reg[3], consoleState);
 }
@@ -211,64 +212,6 @@ function consoleifyString(txt) {
         consoleState.curCol = consoleState.depth;
     });
 
-
-
-    /*txt = escapeHTML(txt).replaceAll(' ', '&MediumSpace;').replaceAll('\n','<br>');
-    const parts = txt.split('\u001b');
-    txt = parts.shift();
-    let append = "";
-    parts.forEach(e => {
-        const split = /\[([0-9;]*)(.)(.*)/.exec(e)
-        if(!split) {
-            txt += e;
-            return;
-        }
-        switch(split?.[2]) {
-            case 'm':
-                split[1].split(';').forEach((v) => {
-                    if(v == "0") {
-                        while(append.startsWith('</span m>')) {
-                            txt += '</span m>';
-                            append = append.substring(9);
-                        }
-                        return;
-                    }
-                    const valmap = {
-                        "1": 'font-weight: bold',
-                        "2": 'opacity: 50%',
-                        "3": 'font-style: italic',
-                        "4": 'text-decoration: underline',
-                        "9": 'text-decoration: line-through',
-                        "30": 'color: var(--bs-black)',
-                        "31": 'color: var(--bs-red)',
-                        "32": 'color: var(--bs-green)',
-                        "33": 'color: var(--bs-yellow)',
-                        "34": 'color: var(--bs-blue)',
-                        "35": 'color: var(--bs-purple)',
-                        "36": 'color: var(--bs-cyan)',
-                        "37": 'color: var(--bs-white)',
-                        "39": 'color: var(--bs-tertiary-color)',
-                        "90": 'color: var(--bs-grey)',
-                        "91": 'color: var(--bs-danger)',
-                        "92": 'color: var(--bs-success)',
-                        "93": 'color: var(--bs-warning)',
-                        "94": 'color: var(--bs-blue)',
-                        "95": 'color: var(--bs-purple)',
-                        "96": 'color: var(--bs-info)',
-                        "97": 'color: var(--bs-white)',
-                    };
-                    txt += `<span style="${valmap[v] ?? ""}">`;
-                    append = "</span m>" + append;
-                });
-                break;
-            case 'D':
-                break;
-            default:
-                break;
-        }
-        txt += split[3];
-    });
-    return txt + append;*/
     log(output);
     return output.reduce((p, v) => p + `<div style="translate: -${v.depth}ch">` + v.parts.reduce((p, v) => p+ "<span " + v.wrap + ">" + v.text.replaceAll('<','&gt;').replaceAll('>','&lt;').replaceAll(' ', '&MediumSpace;') + "</span>", "") + "</div>", "");
 }
