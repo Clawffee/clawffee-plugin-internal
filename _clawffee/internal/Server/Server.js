@@ -2,11 +2,20 @@
 const { addListener } = require('./Subscribable.js');
 const { sharedServerData } = require('./SharedServerData.js');
 const { addHook } = require('../Overrides/ConsoleOverrides.js');
+const fs = require('fs');
+if(!fs.existsSync('./config/internal/server.json')) {
+    fs.writeFileSync('./config/internal/server.json', JSON.stringify({
+        port: 4444
+    }, null, 4))
+}
+const {port} = require('../../../../../config/internal/server.json');
+const builtHTML = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/UI.html"], target: 'browser', splitting: false, compile: true}).then((value) => value.outputs[0]);
+const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/Connect.js"], target: 'browser', splitting: false}).then((value) => value.outputs[0]);
 /**
  * @type {Bun.Server<any>}
  */
 const server = Bun.serve({
-    port: 4444,
+    port: port ?? 4444,
     hostname: "localhost",
     websocket: {
         async message(ws, message) {
@@ -78,24 +87,14 @@ const server = Bun.serve({
         });
     },
     routes: {
-        "/internal/dashboard/": () => {
-            return new Promise((resolve) => {
-                console.warn('no dashboard yet!');
-            });
-        },
-        "/internal/dashboard/images/undefined": (req) => {
-            return new Response("data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==");
-        },
-        "/favicon.ico": (req) => {
-            return new Response(Bun.file("assets/clawffee.ico"))
-        },
+        "/internal/dashboard/": async (req) => new Response(await builtHTML),
+        "/internal/connect.js": async (req) => new Response(await builtConnect),
+        "/favicon.ico": Bun.file("assets/clawffee.ico"),
         "/internal/dashboard/images/:image": (req) => {
             try {
                 return new Response(Bun.file(`./images/${req.params.image}`));
             } catch (e) {
-                return new Response("404 not found", {
-                    status: 404
-                });
+                return new Response("data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==");
             }
         }
     }

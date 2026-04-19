@@ -1,9 +1,15 @@
 //@ts-check
+let port = "4444";
+try {
+    let {port: portunclean} = require('../../../../../../config/internal/server.json');
+    port = String(portunclean ?? "4444");
+} catch(e) {
+}
 /**
  * 
  * @param {string} str 
  */
-function convertURL(str = "4444") {
+function convertURL(str = port) {
     if(parseInt(str)) return `localhost:${str}`;
     return str;
 }
@@ -24,7 +30,7 @@ const {create, call} = /**@type {import('../../Hooks/HookHelper').HookHelper<(pa
 function reconnect(timeout=0) {
     if(ws) ws.close();
     let nextTimeout = (timeout == 0)? 5000 : timeout * 3;
-    let msg = setTimeout(console.log, 200, "Connecting to Clawffee...");
+    let msg = setTimeout(() => console.log("Connecting to Clawffee..."), 200);
     let firstMsg = true
     ws = new WebSocket(`ws://${url}`);
     ws.onopen = () => {
@@ -49,7 +55,7 @@ reconnect(5000);
 /**
  * 
  * @param {string | string[]} path 
- * @param {(restPath: string[], value: unknown) => void} callback 
+ * @param {(restPath: string[], value: any) => void} callback 
  */
 globalThis.listenToClawffee = (path, callback) => {
     if(typeof path == 'string') {

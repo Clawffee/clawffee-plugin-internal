@@ -84,6 +84,7 @@ function adjustState(output, txt, consoleState) {
                     "96": 'var(--bs-info)',
                     "97": 'var(--bs-white)',
                 };
+                // @ts-ignore
                 if(colmap[v]) return consoleState.color = colmap[v];
                 const bgmap = {
                     "40": 'var(--bs-black)',
@@ -104,6 +105,7 @@ function adjustState(output, txt, consoleState) {
                     "106": 'var(--bs-info)',
                     "107": 'var(--bs-white)',
                 };
+                // @ts-ignore
                 if(bgmap[v]) return consoleState.bg = bgmap[v];
             });
             break;
@@ -226,6 +228,7 @@ let consoleWindow;
 const windowURL = /[^\/]*.$/.exec(window.location.href)?.[0] ?? "localhost:4444";
 /**
  * @param {string} name
+ * @param {string} line
  * @param {string} cls
  * @param {string} text
  */
@@ -234,8 +237,10 @@ function addToConsole(name, line, cls, text) {
     const nameobj = document.createElement('div');
     nameobj.appendChild(document.createElement('div'));
     nameobj.appendChild(document.createElement('div'));
-    nameobj.firstChild.innerHTML = consoleifyString(name);
-    nameobj.lastChild.innerHTML = consoleifyString(line);
+    //@ts-ignore
+    nameobj.firstElementChild.innerHTML = consoleifyString(name);
+    //@ts-ignore
+    nameobj.firstElementChild.innerHTML = consoleifyString(line);
     const textobj = document.createElement('div');
     textobj.innerHTML = consoleifyString(text);
     if (cls) {
@@ -245,14 +250,19 @@ function addToConsole(name, line, cls, text) {
     consoleWindow.appendChild(nameobj);
     consoleWindow.appendChild(textobj);
     if (consoleWindow.childElementCount > 200) {
-        consoleWindow.removeChild(consoleWindow.firstChild);
-        consoleWindow.removeChild(consoleWindow.firstChild);
-        consoleWindow.removeChild(consoleWindow.firstChild);
-        consoleWindow.removeChild(consoleWindow.firstChild);
+        //@ts-ignore
+        consoleWindow.removeChild(consoleWindow.firstElementChild);
+        //@ts-ignore
+        consoleWindow.removeChild(consoleWindow.firstElementChild);
+        //@ts-ignore
+        consoleWindow.removeChild(consoleWindow.firstElementChild);
+        //@ts-ignore
+        consoleWindow.removeChild(consoleWindow.firstElementChild);
     }
-    consoleWindow.lastElementChild.scrollIntoView();
+    consoleWindow.lastElementChild?.scrollIntoView();
 }
 window.onload = () => {
+    //@ts-ignore
     consoleWindow = document.getElementById("consoleWindow");
     let v;
     while (v = consoleCache.shift()) addToConsole(v.name, v.line, v.cls, v.text);
@@ -264,20 +274,30 @@ window.onload = () => {
             "log": "var(--bs-tertiary-color)",
         };
         const namesplit = /(.*):([^:]*:[^:]*)/.exec(data.smallname);
-        addToConsole(namesplit[1] ?? "[unknown]", ":" + (namesplit[2] ?? ""), clsmap[rpath[0]], data.cleaneddata);
+        // @ts-ignore
+        addToConsole(namesplit?.[1] ?? "[unknown]", ":" + (namesplit?.[2] ?? ""), clsmap[rpath[0]] ?? null, data.cleaneddata);
     })
 };
+/**
+ * 
+ * @param {string} name 
+ * @param {string} cls 
+ */
 function wrapCons(name, cls) {
+    // @ts-ignore
     const bak = console[name];
+    // @ts-ignore
     console[name] = (...data) => {
         const stack = {};
+        // @ts-ignore
         Error.captureStackTrace(stack, console[name]);
+        // @ts-ignore
         const line = stack.stack.split('\n').map(v => /([^\/]*.)(:\d+:\d+)$/.exec(v)).filter(Boolean)[0];
         let n = line?.[1];
         if (n?.startsWith(windowURL)) {
             n = "UI" + n.substring(windowURL.length);
         }
-        bak(line[0], ...data);
+        bak(line?.[0], ...data);
         addToConsole(n ?? "[unknown]", line?.[2] ?? "", cls, data.map(v => (typeof v == 'object') ? JSON.stringify(v) : String(v)).join(' '));
     }
 }
