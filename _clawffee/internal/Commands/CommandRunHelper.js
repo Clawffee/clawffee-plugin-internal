@@ -144,7 +144,11 @@ onChange((path, cmdObj, isLoad) => {
         }
         loadedCommands.add(path);
     } else {
-        console.log(`- ${path}`);
+        if(loadedCommands.has(path)) {
+            console.log(`- ${path}`);
+        } else {
+            console.log(`☇ ${path}`);
+        }
         loadedCommands.delete(path);
     }
 }) 
