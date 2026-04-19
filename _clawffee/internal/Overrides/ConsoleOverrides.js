@@ -115,7 +115,9 @@ function wrapConsoleFunction(name, copy, prefix = "", skipcalls = false) {
         }
         longestName = Math.max(longestName, Bun.stripANSI(smallname).length + 2);
         longestLongName = Math.max(longestLongName, Bun.stripANSI(fullname).length + 2);
-        const cleaneddata = cleanData(data, prefix);
+        const cleaneddata = cleanData(data, prefix)
+            .replaceAll(/\b([12]?\d?\d\.){3}([12]?\d?\d)\b/g, (sub, ...args) => `[IP: ${args[1]}]`)
+            .replaceAll(/\b([\da-fA-F]{,4}:){1,4}([\da-fA-F]{,4}):(([\da-fA-F]{,4}:){1,3}([\da-fA-F]{,4})|([12]?\d?\d\.){3}([12]?\d?\d))\b/g, (sub, ...args) => `[IPv6: ${args[1]}]`)
 
         logFile.write(Bun.stripANSI(
             new Date().toISOString().padEnd(longestLongName, " ")
