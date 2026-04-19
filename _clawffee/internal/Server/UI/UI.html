@@ -17,8 +17,60 @@
             }
         }
     </style>
-    <meta clawffee_url="localhost:4444/internal/">
-    <script src="Connect.js"></script>
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none">
+        <defs>
+            <symbol id="move-icon" viewBox="0 0 256 256">
+                <rect width="256" height="256" fill="none" />
+                <rect x="54.46" y="54.46" width="147.08" height="147.08" transform="translate(-53.02 128) rotate(-45)"
+                    opacity="0.2" />
+                <line x1="128" y1="160" x2="128" y2="232" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <line x1="128" y1="96" x2="128" y2="24" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <polyline points="96 56 128 24 160 56" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <polyline points="96 200 128 232 160 200" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <line x1="96" y1="128" x2="24" y2="128" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <line x1="160" y1="128" x2="232" y2="128" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <polyline points="200 96 232 128 200 160" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <polyline points="56 96 24 128 56 160" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+            </symbol>
+            <symbol id="pause-icon" viewBox="0 0 256 256">
+                <rect width="256" height="256" fill="none" />
+                <rect x="152" y="40" width="56" height="176" rx="8" opacity="0.2" />
+                <rect x="48" y="40" width="56" height="176" rx="8" opacity="0.2" />
+                <rect x="152" y="40" width="56" height="176" rx="8" fill="none" stroke="currentColor"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="24" />
+                <rect x="48" y="40" width="56" height="176" rx="8" fill="none" stroke="currentColor"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="24" />
+            </symbol>
+            <symbol id="play-icon" viewBox="0 0 256 256">
+                <rect width="256" height="256" fill="none" />
+                <path
+                    d="M72,39.88V216.12a8,8,0,0,0,12.15,6.69l144.08-88.12a7.82,7.82,0,0,0,0-13.38L84.15,33.19A8,8,0,0,0,72,39.88Z"
+                    opacity="0.2" />
+                <path
+                    d="M72,39.88V216.12a8,8,0,0,0,12.15,6.69l144.08-88.12a7.82,7.82,0,0,0,0-13.38L84.15,33.19A8,8,0,0,0,72,39.88Z"
+                    fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                    stroke-width="24" />
+            </symbol>
+            <symbol id="close-icon" viewBox="0 0 256 256">
+                <rect width="256" height="256" fill="none" />
+                <line x1="200" y1="56" x2="56" y2="200" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <line x1="200" y1="200" x2="56" y2="56" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+            </symbol>
+        </defs>
+    </svg>
+    <meta clawffee_path="/internal/">
+    <script src="./Connect.js">
+    </script>
 </head>
 
 <body data-bs-theme="dark">
@@ -34,6 +86,7 @@
                     overflow: hidden;
                     font-family: monospace;
                     font-size: 80%;
+
                     &::after {
                         content: "";
                         position: absolute;
@@ -44,6 +97,7 @@
                         background: linear-gradient(180deg, var(--bs-tertiary-bg), transparent);
                         z-index: 10;
                     }
+
                     &>* {
                         z-index: -1;
                     }
@@ -102,11 +156,81 @@
         <div class="terminal bg-body mt-2">
             <div id="consoleWindow"></div>
         </div>
-        <script src="TerminalUI.js">
+        <script src="./TerminalUI.js">
+            console.log(test)
         </script>
     </nav>
-    <div style="height: 10000px;"></div>
-    <script src="../../../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <article>
+        <div class="row row-cols-2 g-3 m-1">
+            <div class="col">
+                <div class="card" style="overflow: hidden;">
+                    <div class="row g-0" style="height: 9cap">
+                        <div class="col" style="min-width: 8cap; flex-grow: 0;">
+                            <img src="../../../../../../assets/clawffee.png" class="img-fluid rounded-start"
+                                style="height: 8cap">
+                        </div>
+                        <div class="col">
+                            <div class="card-body">
+                                <h5 class="card-title">Button Title</h5>
+                                <div class="col">
+                                    <div class="btn-group" role="group" aria-label="Basic example">
+                                        <button type="button" class="btn btn-danger">Lock</button>
+                                        <button type="button" class="btn btn-primary">Reload</button>
+                                        <button type="button" class="btn btn-primary">Edit</button>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary">Settings</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="background-color: red; height: 2em;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card" style="overflow: hidden;">
+                    <div class="row g-0" style="height: 9cap">
+                        <div class="col" style="max-width: 8cap">
+                            <img src="../../../../../../assets/clawffee.png" class="img-fluid rounded-start"
+                                style="height: 8cap">
+                        </div>
+                        <div class="col">
+                            <div class="card-body">
+                                <h5 class="card-title">Button Title</h5>
+                                <div class="btn-group" role="group" aria-label="Basic example">
+                                    <button type="button" class="btn btn-red">Left</button>
+                                    <button type="button" class="btn btn-primary">Middle</button>
+                                    <button type="button" class="btn btn-primary">Right</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="background-color: red;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card" style="overflow: hidden;">
+                    <div class="row g-0" style="height: 9cap">
+                        <div class="col" style="max-width: 8cap">
+                            <img src="../../../../../../assets/clawffee.png" class="img-fluid rounded-start"
+                                style="height: 8cap">
+                        </div>
+                        <div class="col">
+                            <div class="card-body">
+                                <h5 class="card-title">Button Title</h5>
+                                <div class="btn-group" role="group" aria-label="Basic example">
+                                    <button type="button" class="btn btn-primary">Left</button>
+                                    <button type="button" class="btn btn-primary">Middle</button>
+                                    <button type="button" class="btn btn-primary">Right</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="background-color: red;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </article>
+    <script src="../../../../node_modules/bootstrap/js/index.esm.js"></script>
 </body>
 
 </html>

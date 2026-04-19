@@ -9,8 +9,8 @@ if(!fs.existsSync('./config/internal/server.json')) {
     }, null, 4))
 }
 const {port} = require('../../../../../config/internal/server.json');
-const builtHTML = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/UI.html"], target: 'browser', splitting: false, compile: true}).then((value) => value.outputs[0]);
-const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/Connect.js"], target: 'browser', splitting: false}).then((value) => value.outputs[0]);
+const builtHTML = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/UI.html"], target: 'browser', compile: true}).then((value) => value.outputs[0]);
+const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/Connect.js"], target: 'browser', compile: true}).then((value) => value.outputs[0]);
 /**
  * @type {Bun.Server<any>}
  */
@@ -42,6 +42,7 @@ const server = Bun.serve({
         const url = new URL(req.url, 'http://localhost:4444');
         if(url.pathname == '/internal/')
             extradata.data.path = "internal";
+        //@ts-ignore
         const success = server.upgrade(req, extradata);
         if (success) {
             return undefined;

@@ -1,17 +1,16 @@
 //@ts-check
 let port = "4444";
-try {
-    let {port: portunclean} = require('../../../../../../config/internal/server.json');
-    port = String(portunclean ?? "4444");
-} catch(e) {
-}
+import data from '../../../../../../config/internal/server.json';
+port = String(data.port ?? "4444");
 /**
  * 
  * @param {string} str 
  */
 function convertURL(str = port) {
-    if(parseInt(str)) return `localhost:${str}`;
-    return str;
+    return (
+        (document.querySelector('meta[clawffee_url]')?.attributes.getNamedItem('clawffee_url')?.value ?? `localhost:${port}`)
+        + (document.querySelector('meta[clawffee_path]')?.attributes.getNamedItem('clawffee_path')?.value ?? "/")
+    )
 }
 const url = convertURL(
     document.querySelector('meta[clawffee_url]')
@@ -51,13 +50,12 @@ function reconnect(timeout=0) {
     }
 }
 reconnect(5000);
-
 /**
  * 
  * @param {string | string[]} path 
  * @param {(restPath: string[], value: any) => void} callback 
  */
-globalThis.listenToClawffee = (path, callback) => {
+export function listenToClawffee(path, callback) {
     if(typeof path == 'string') {
         path = path.split('/');
     }
@@ -66,3 +64,5 @@ globalThis.listenToClawffee = (path, callback) => {
         callback(dpath.slice(path.length), data);
     });
 }
+
+globalThis.listenToClawffee = listenToClawffee;
