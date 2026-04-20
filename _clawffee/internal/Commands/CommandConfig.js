@@ -4,7 +4,7 @@ const { sep } = require('path');
 const fs = require('fs');
 const { simpleHookMgr } = require('../Hooks/HookHelper');
 const { sharedServerData } = require('../Server/SharedServerData');
-
+const { defaultenv } = require('tscheck');
 const confPath = 'config/internal/commands.json';
 
 /**
@@ -21,35 +21,61 @@ const confPath = 'config/internal/commands.json';
  * @prop {string[]} dependers
  * @prop {?string} parent
  */
+defaultenv.parseType(`{
+    name: string,
+    fullname: string,
+    sortname: string?,
+    img: string?,
+    hidden: boolean,
+    disabled: boolean,
+    locked: boolean,
+    errored: boolean,
+    dependencies: string[],
+    dependers: string[],
+    parent: string?
+}`, "commandConfig");
 /**
  * @typedef {{childscripts: {[child: string]: commandConfig}, childfolders: {[child: string]: folderConfig}} & commandConfig} folderConfig
  */
-const config = sharedServerData.internal.commandConfig = /**@type {folderConfig} **/ (fs.existsSync(confPath)? JSON.parse(fs.readFileSync(confPath).toString()): {
-    "name": "commands",
-    "fullname": "commands",
-    "sortname": null,
-    "img": null,
-    "hidden": false,
-    "disabled": false,
-    "dependencies": [],
-    "dependers": [],
-    "childfolders": {
-        "examples": {
-            "name": "examples",
-            "fullname": "commands/examples",
-            "sortname": null,
-            "img": null,
-            "hidden": true,
-            "disabled": true,
-            "dependencies": [],
-            "dependers": [],
-            "parent": "commands",
-            "childfolders": {},
-            "childscripts": {}
-        }
-    },
-    "childscripts": {}
-})
+defaultenv.parseType(`commandConfig & {
+    childscripts: {[child: string]: commandConfig},
+    childfolders: {[child: string]: folderConfig}
+}`, 'folderConfig');
+
+let config = sharedServerData.internal.commandConfig = /**@type {folderConfig} **/ (fs.existsSync(confPath)? JSON.parse(fs.readFileSync(confPath).toString()): null)
+if(!defaultenv.check("folderConfig")(config)) {
+    //@ts-ignore
+    config = sharedServerData.internal.commandConfig = {
+        "name": "commands",
+        "fullname": "commands",
+        "sortname": null,
+        "img": null,
+        "hidden": false,
+        "disabled": false,
+        "dependencies": [],
+        "locked": false,
+        "dependers": [],
+        "errored": false,
+        "childfolders": {
+            "examples": {
+                "name": "examples",
+                "fullname": "commands/examples",
+                "sortname": null,
+                "img": null,
+                "hidden": true,
+                "disabled": true,
+                "locked": true,
+                "errored": false,
+                "dependencies": [],
+                "dependers": [],
+                "parent": "commands",
+                "childfolders": {},
+                "childscripts": {}
+            }
+        },
+        "childscripts": {}
+    }
+}
 clawffeeInternals.commandConfig = config;
 
 /**
