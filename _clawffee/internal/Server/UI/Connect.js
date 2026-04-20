@@ -22,6 +22,12 @@ const url = convertURL(
  */
 let ws;
 const {create, call} = /**@type {import('../../Hooks/HookHelper').HookHelper<(path: string[], data: any) => void>} **/ (require('../../Hooks/HookHelper').simpleHookMgr());
+const {create: createAlways, call: callAlways} = /**@type {import('../../Hooks/HookHelper').HookHelper<(path: string[], data: any) => void>} **/ (require('../../Hooks/HookHelper').simpleHookMgr());
+
+function getSubObject(path) {
+    
+}
+
 /**
  * 
  * @param {number} timeout 
@@ -45,11 +51,15 @@ function reconnect(timeout=0) {
     }
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        callAlways(data.p ?? [], data.v);
         if(!firstMsg) return firstMsg = true;
         call(data.p ?? [], data.v);
     }
 }
-reconnect(5000);
+window.onload = () => {
+    setTimeout(() => reconnect(5000), 1);
+}
+
 /**
  * 
  * @param {string | string[]} path 
@@ -64,5 +74,21 @@ export function listenToClawffee(path, callback) {
         callback(dpath.slice(path.length), data);
     });
 }
+/**
+ * 
+ * @param {string | string[]} path 
+ * @param {(restPath: string[], value: any) => void} callback 
+ */
+export function getFromClawffee(path, callback) {
+    if(typeof path == 'string') {
+        path = path.split('/');
+    }
+    createAlways((dpath, data) => {
+        if(path.some((v, i) => dpath[i] != v)) return;
+        callback(dpath.slice(path.length), data);
+    });
+}
 
 globalThis.listenToClawffee = listenToClawffee;
+
+globalThis.getFromClawffee = getFromClawffee;
