@@ -236,11 +236,14 @@ function addToConsole(name, line, cls, text) {
     if (!consoleWindow) return consoleCache.push({ name, line, cls, text });
     const nameobj = document.createElement('div');
     nameobj.appendChild(document.createElement('div'));
-    nameobj.appendChild(document.createElement('div'));
     //@ts-ignore
-    nameobj.firstElementChild.innerHTML = consoleifyString(name);
+    nameobj.firstElementChild.appendChild(document.createElement('div'));
     //@ts-ignore
-    nameobj.firstElementChild.innerHTML = consoleifyString(line);
+    nameobj.firstElementChild.appendChild(document.createElement('div'));
+    //@ts-ignore
+    nameobj.firstElementChild.firstElementChild.innerHTML = consoleifyString(name);
+    //@ts-ignore
+    nameobj.firstElementChild.lastElementChild.innerHTML = consoleifyString(line);
     const textobj = document.createElement('div');
     textobj.innerHTML = consoleifyString(text);
     if (cls) {

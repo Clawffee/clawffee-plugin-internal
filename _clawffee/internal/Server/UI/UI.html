@@ -76,12 +76,12 @@
 <body data-bs-theme="dark">
     <nav class="navbar fixed-bottom bg-body-tertiary">
         <div class="container-fluid">
-            <h5>Terminal</h5>
+            <h5>Clawffee</h5>
             <style>
                 .terminal {
                     position: relative;
                     align-content: end;
-                    height: 30vh;
+                    height: calc(100vh - 5em);
                     width: 100vw;
                     overflow: hidden;
                     font-family: monospace;
@@ -104,7 +104,7 @@
                 }
 
                 #consoleWindow {
-                    max-height: 30vh;
+                    max-height: calc(100vh - 5em);
                     overflow: hidden scroll;
                     display: grid;
                     grid-template-columns: min-content auto;
@@ -124,12 +124,14 @@
                             overflow-y: visible;
                             word-break: keep-all;
                             white-space: nowrap;
-                            display: flex;
                             overflow: hidden;
-                            flex-wrap: wrap;
                             z-index: 2;
+                            &>* {
+                                display: flex;
+                                width: max-content;
+                                flex-wrap: wrap;
+                            }
                         }
-
                         &:nth-child(even) {
                             word-break: break-all;
                             line-break: anywhere;
@@ -147,9 +149,7 @@
                     }
                 }
             </style>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
-                aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
                 <span class="navbar-toggler-icon"></span>
             </button>
         </div>
@@ -160,74 +160,99 @@
             console.log(test)
         </script>
     </nav>
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="offcanvasExampleLabel">Clawffee</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column">
+            <p>Plugin Settings: </p>
+            <ul class="nav nav-pills flex-column mb-auto" style="overflow-y: auto; flex-wrap: nowrap;">
+                <li class="nav-item">
+                    <a href="#" class="nav-link" aria-current="page">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-hdd-stack-fill me-2" viewBox="0 0 16 16">
+                            <path
+                                d="M2 9a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1" />
+                        </svg>
+                        Server
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" aria-current="page">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-hdd-stack-fill me-2" viewBox="0 0 16 16">
+                            <path
+                                d="M2 9a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1" />
+                        </svg>
+                        Twurple (Twitch)
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" aria-current="page">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-hdd-stack-fill me-2" viewBox="0 0 16 16">
+                            <path
+                                d="M2 9a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1" />
+                        </svg>
+                        OBS
+                    </a>
+                </li>
+            </ul>
+            <hr>
+            <ul class="nav nav-pills flex-column">
+                <li>
+                    <a href="#" class="nav-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-discord me-2" viewBox="0 0 16 16">
+                            <path
+                                d="M13.545 2.907a13.2 13.2 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.2 12.2 0 0 0-3.658 0 8 8 0 0 0-.412-.833.05.05 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.04.04 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032q.003.022.021.037a13.3 13.3 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019q.463-.63.818-1.329a.05.05 0 0 0-.01-.059l-.018-.011a9 9 0 0 1-1.248-.595.05.05 0 0 1-.02-.066l.015-.019q.127-.095.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.05.05 0 0 1 .053.007q.121.1.248.195a.05.05 0 0 1-.004.085 8 8 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.2 13.2 0 0 0 4.001-2.02.05.05 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.03.03 0 0 0-.02-.019m-8.198 7.307c-.789 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612m5.316 0c-.788 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612" />
+                        </svg>
+                        Discord
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-heart-fill me-2" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd"
+                                d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314" />
+                        </svg>
+                        Support me!
+                    </a>
+                </li>
+            </ul>
+            <hr>
+            <span><span class="badge bg-primary" style="width: fit-content;" id="version-tag">0.5.0</span> by Katzentatzentanz 🐾</span>
+        </div>
+    </div>
+    <script>
+        window.onload = () => {
+            globalThis.listenToClawffee([], (...data) => {
+                console.log(...data);
+            });
+        }
+    </script>
     <article>
         <div class="row row-cols-2 g-3 m-1">
-            <div class="col">
-                <div class="card" style="overflow: hidden;">
-                    <div class="row g-0" style="height: 9cap">
-                        <div class="col" style="min-width: 8cap; flex-grow: 0;">
-                            <img src="../../../../../../assets/clawffee.png" class="img-fluid rounded-start"
-                                style="height: 8cap">
-                        </div>
-                        <div class="col">
-                            <div class="card-body">
-                                <h5 class="card-title">Button Title</h5>
-                                <div class="col">
-                                    <div class="btn-group" role="group" aria-label="Basic example">
-                                        <button type="button" class="btn btn-danger">Lock</button>
-                                        <button type="button" class="btn btn-primary">Reload</button>
-                                        <button type="button" class="btn btn-primary">Edit</button>
-                                    </div>
-                                    <button type="button" class="btn btn-outline-primary">Settings</button>
+            <template>
+                <div class="col">
+                    <div class="card" style="overflow: hidden;">
+                        <div class="row g-0" style="height: 9cap">
+                            <div class="col" style="min-width: 8cap; flex-grow: 0;">
+                                <img src="../../../../../../assets/clawffee.png" class="img-fluid rounded-start"
+                                    style="height: 8cap">
+                            </div>
+                            <div class="col">
+                                <div class="card-body">
+                                    <h5 class="card-title">Button Title</h5>
                                 </div>
                             </div>
+                            <div style="background-color: red; height: 2em;"></div>
                         </div>
-                        <div style="background-color: red; height: 2em;"></div>
                     </div>
                 </div>
-            </div>
-            <div class="col">
-                <div class="card" style="overflow: hidden;">
-                    <div class="row g-0" style="height: 9cap">
-                        <div class="col" style="max-width: 8cap">
-                            <img src="../../../../../../assets/clawffee.png" class="img-fluid rounded-start"
-                                style="height: 8cap">
-                        </div>
-                        <div class="col">
-                            <div class="card-body">
-                                <h5 class="card-title">Button Title</h5>
-                                <div class="btn-group" role="group" aria-label="Basic example">
-                                    <button type="button" class="btn btn-red">Left</button>
-                                    <button type="button" class="btn btn-primary">Middle</button>
-                                    <button type="button" class="btn btn-primary">Right</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="background-color: red;"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card" style="overflow: hidden;">
-                    <div class="row g-0" style="height: 9cap">
-                        <div class="col" style="max-width: 8cap">
-                            <img src="../../../../../../assets/clawffee.png" class="img-fluid rounded-start"
-                                style="height: 8cap">
-                        </div>
-                        <div class="col">
-                            <div class="card-body">
-                                <h5 class="card-title">Button Title</h5>
-                                <div class="btn-group" role="group" aria-label="Basic example">
-                                    <button type="button" class="btn btn-primary">Left</button>
-                                    <button type="button" class="btn btn-primary">Middle</button>
-                                    <button type="button" class="btn btn-primary">Right</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="background-color: red;"></div>
-                    </div>
-                </div>
-            </div>
+            </template>
         </div>
     </article>
     <script src="../../../../node_modules/bootstrap/js/index.esm.js"></script>
