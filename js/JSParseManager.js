@@ -81,7 +81,11 @@ function applyOverrides(filename, codeStr, parsedCode) {
                 sourceMap.insert(`${funcstr}_`, node.id.start);
                 sourceMap.insert(`,"${node.id.name}")`, node.end);
             } else {
-                sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(`, node.params[0].start - node.start, node.start);
+                if(node.params.length > 0) {
+                    sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(`, node.params[0].start - node.start, node.start);
+                } else {
+                    sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}()`, node.body.start - node.start, node.start);
+                }
                 sourceMap.insert(`)`, node.end);
             }
         },
@@ -89,21 +93,26 @@ function applyOverrides(filename, codeStr, parsedCode) {
             if(node.value.type != 'FunctionExpression') return;
             if(node.method) {
                 sourceMap.insert(":", node.key.end);
-                sourceMap.insert("=>", node.value.body.start);
             }
         },
         FunctionExpression: (node, state) => {
             const funcstr = addVariable(filename, "function_name", codeStr);
-            const params = node.params.map(v => codeStr.substring(v.start, v.end)).join(', ');
-            sourceMap.insert(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params}) {(`, node.start);
-            sourceMap.insert(`});`, node.body.start+1);
+            if(node.params.length > 0) {
+                sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(`, node.params[0].start - node.start, node.start);
+                sourceMap.replace(`)`, node.body.start - node.params[node.params.length-1].end, node.params[node.params.length-1].end);
+            } else {
+                sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}()`, node.body.start - node.start, node.start);
+            }
             sourceMap.insert(`)`, node.end);
         },
         ArrowFunctionExpression: (node, state) => {
             const funcstr = addVariable(filename, "function_name", codeStr);
-            const params = node.params.map(v => codeStr.substring(v.start, v.end)).join(', ');
-            sourceMap.insert(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params}) {(`, node.start);
-            sourceMap.insert(`});`, node.body.start+1);
+            if(node.params.length > 0) {
+                sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(`, node.params[0].start - node.start, node.start);
+                sourceMap.replace(`)`, node.body.start - node.params[node.params.length-1].end, node.params[node.params.length-1].end);
+            } else {
+                sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}()`, node.body.start - node.start, node.start);
+            }
             sourceMap.insert(`)`, node.end);
         },
     });
@@ -160,6 +169,7 @@ function wrapCode(filename, codeStr) {
             }
         });
         const compiledCode = applyOverrides(filename, codeStr, parsedCode);
+        console.log(compiledCode.str);
         const rootfuncstr = addVariable(filename, "function_name", codeStr);
         functionNames.set(rootfuncstr, "top_level");
         functionFileNames.set(rootfuncstr, filename);
