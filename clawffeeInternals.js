@@ -33,7 +33,7 @@ module.exports = {
      * @param {any} stack the stack trace to apply on the error to use as the stack trace
      */
     prettyPrepareStack(error, stack) {
-        clawffeeInternals.prettyPrepareStack(error, stack);
+        return clawffeeInternals.prettyPrepareStack(error, stack);
     },
     fileManagers: globalThis.clawffeeInternals.fileManagers,
     addFileManager(extension, onRequire, onLoad, onUnload) {

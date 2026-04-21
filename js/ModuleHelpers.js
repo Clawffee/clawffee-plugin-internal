@@ -90,7 +90,8 @@ function runAsFile(fullpath, funcStr, keepCache) {
     mod.isPreloading = mod.isPreloading;
     try {
         const func = wrapCode(fullpath, funcStr);
-        func.bind(globalThis)(mod.exports, mod.require, mod, fullpath, path.dirname(fullpath));
+        if(func) func.bind(globalThis)(mod.exports, mod.require, mod, fullpath, path.dirname(fullpath));
+        else return null;
     } catch(e) {
         throw e;
     }
