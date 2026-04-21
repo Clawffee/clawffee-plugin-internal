@@ -83,9 +83,13 @@ function runAsFile(fullpath, funcStr, keepCache) {
     globalThis.clawffeeInternals.fileCleanupFuncs[fullpath] = [];
     const mod = createModule(fullpath);
     mod.isPreloading = mod.isPreloading;
-    const func = wrapCode(fullpath, funcStr);
-    if(!func) return null;
-    func.bind(globalThis)(mod.exports, mod.require, mod, fullpath, path.dirname(fullpath));
+    try {
+        const func = wrapCode(fullpath, funcStr);
+        if(func) func.bind(globalThis)(mod.exports, mod.require, mod, fullpath, path.dirname(fullpath));
+        else return null;
+    } catch(e) {
+        throw e;
+    }
     mod.loaded = true;
     require.cache[fullpath] = mod;
     return mod;

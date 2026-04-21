@@ -81,9 +81,7 @@ function applyOverrides(filename, codeStr, parsedCode) {
                 sourceMap.insert(`${funcstr}_`, node.id.start);
                 sourceMap.insert(`,"${node.id.name}")`, node.end);
             } else {
-                const params = node.params.map(v => codeStr.substring(v.start, v.end)).join(', ');
-                sourceMap.insert(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params}) {(`, node.start);
-                sourceMap.insert(`});`, node.body.start+1);
+                sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(`, node.params[0].start - node.start, node.start);
                 sourceMap.insert(`)`, node.end);
             }
         },
@@ -139,41 +137,29 @@ globalThis.clawffeeInternals.addFunction = (name, fn, fakename) => {
 function wrapCode(filename, codeStr) {
     // syntax check
     try {
-        const fn = new Function(codeStr);
-    } catch(e) {
-        if(e instanceof SyntaxError) {
-            //@ts-ignore
-            e.stack = [{
-                getFileName: () => filename,
-            //@ts-ignore
-                getLineNumber: () => e.line-1,
-            //@ts-ignore
-                getColumnNumber: () => e.column,
-                getFunctionName: () => "top_level",
-                isToplevel: () => true
-            }]
-            if(e.message.includes("(")) {
-                e.message = e.message.substring(0, e.message.lastIndexOf("("));
-            }
-            throw e;
-        }
-        throw e;
-    }
-    try {
         const parsedCode = parseJS(codeStr);
+        function throwErr(msg, char) {
+            const err = new SyntaxError(msg);
+            err.loc = createSourceMap(codeStr).build().getPos(char);
+            err.loc.line += 1;
+            throw err;
+        }
         // temporary error if import statements are used
         acorn_walk.simple(parsedCode, {
-            ImportDeclaration: () => {
-                throw new SyntaxError("Import statements are not yet supported in Clawffee scripts.");
+            ImportDeclaration: (node) => {
+                throwErr("Import statements are not yet supported in Clawffee scripts.", node.start);
             },
-            ExportNamedDeclaration: () => {
-                throw new SyntaxError("Export statements are not yet supported in Clawffee scripts.");
+            ExportNamedDeclaration: (node) => {
+                throwErr("Export statements are not yet supported in Clawffee scripts.", node.start);
             },
-            ExportDefaultDeclaration: () => {
-                throw new SyntaxError("Export statements are not yet supported in Clawffee scripts.");
+            ExportDefaultDeclaration: (node) => {
+                throwErr("Export statements are not yet supported in Clawffee scripts.", node.start);
             },
-            ExportAllDeclaration: () => {
-                throw new SyntaxError("Export statements are not yet supported in Clawffee scripts.");
+            ExportAllDeclaration: (node) => {
+                throwErr("Export statements are not yet supported in Clawffee scripts.", node.start);
+            },
+            DebuggerStatement: (node) => {
+                throwErr("debugger statements are not yet supported in Clawffee scripts.", node.start);
             }
         });
         const compiledCode = applyOverrides(filename, codeStr, parsedCode);
@@ -208,11 +194,11 @@ function wrapCode(filename, codeStr) {
         if(e instanceof SyntaxError) {
             e.stack = [{
                 getFileName: () => filename,
-                getLineNumber: () => e.loc.line - 5,
+                getLineNumber: () => e.loc.line,
                 getColumnNumber: () => e.loc.column,
                 getFunctionName: () => "top_level",
                 isToplevel: () => true
-            }]
+            }];
             if(e.message.includes("(")) {
                 e.message = e.message.substring(0, e.message.lastIndexOf("("));
             }
