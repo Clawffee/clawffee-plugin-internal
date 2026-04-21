@@ -172,7 +172,9 @@ function wrapCode(filename, codeStr) {
             }
         });
         const compiledCode = applyOverrides(filename, codeStr, parsedCode);
-        console.log(compiledCode.str);
+        if(clawffeeInternals.verbose) {
+            console.log(compiledCode.str);
+        }
         const rootfuncstr = addVariable(filename, "function_name", codeStr);
         functionNames.set(rootfuncstr, "top_level");
         functionFileNames.set(rootfuncstr, filename);
