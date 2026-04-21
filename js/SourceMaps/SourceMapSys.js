@@ -52,7 +52,7 @@ function createSourceMap(original) {
      */
     function insert(txt, index, deletedChars) {
         const line = originalLinePositions.findLastIndex((v) => v <= index);
-        insertions.push({
+        insertions.unshift({
             txt,
             deletedChars,
             char: index,
@@ -60,7 +60,7 @@ function createSourceMap(original) {
             line,
             column: index - originalLinePositions[line],
             finalPos: 0
-        })
+        }) // TODO: causes race-ish condition
         return ret;
     }
     const ret = {
