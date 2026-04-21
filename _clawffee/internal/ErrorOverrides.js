@@ -46,29 +46,24 @@ function overrideStack(v) {
     v.getFunctionName = () => functionNames.get(f) ?? null;
     v.getScriptNameOrSourceURL = () => functionNames.get(f) ?? null;
     v.getFileName = () => fileName;
-    const origColumn = v.getColumnNumber() ?? 0;
-    /**
-     * @type {number}
-     */
-    let column;
-    v.getColumnNumber = () => {
-        if(column) return column;
-        column = origColumn;
-        const insertions = fileInfo.get(fileName)?.insertions;
-        const line = v.getLineNumber() ?? 0;
-        (insertions?.[line] ?? []).forEach(ins => {
-            if(ins.p > column) return;
-            column = Math.max(column - ins.l, ins.p);
-        });
-        return column;
-    }
     v.Overriden = true;
-    for(let key in functionOverrides.get(fileName)) {
+    const overrides = functionOverrides.get(fileName);
+    if(!overrides) return true;
+    const original = {};
+    Object.entries(overrides).forEach(([key, value]) => {
+        if(!value) return;
         //@ts-ignore
-        var val = v[key]();
+        var val = v[key];
         //@ts-ignore
-        v[key] = functionOverrides.get(fileName)[key].bind(v, val, f);
-    }
+        original[key] = val;
+        //@ts-ignore
+        v[key] = value.bind(v, new Proxy({}, {
+            get(t, p, r) {
+                //@ts-ignore
+                return original[p].bind(v) ?? v[p];
+            }
+        }), val, f);
+    });
     return true;
 }
 

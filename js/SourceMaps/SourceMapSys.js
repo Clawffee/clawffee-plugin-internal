@@ -1,7 +1,7 @@
 //@ts-check
 /**
  * @typedef insertions
- * @prop {string} txt
+ * @prop {string | (() => string)} txt
  * @prop {number} deletedChars
  * @prop {number} deltaLines
  * @prop {number} char
@@ -46,7 +46,7 @@ function createSourceMap(original) {
     }));
     /**
      * 
-     * @param {string} txt 
+     * @param {string | (() => string)} txt 
      * @param {number} index 
      * @param {number} deletedChars 
      */
@@ -56,7 +56,7 @@ function createSourceMap(original) {
             txt,
             deletedChars,
             char: index,
-            deltaLines: txt.split('\n').length-1,
+            deltaLines: 0,
             line,
             column: index - originalLinePositions[line],
             finalPos: 0
@@ -66,7 +66,7 @@ function createSourceMap(original) {
     const ret = {
         /**
          * 
-         * @param {string} txt 
+         * @param {string | (() => string)} txt 
          * @param {number} char 
          * @param {number} line 
          */
@@ -86,7 +86,7 @@ function createSourceMap(original) {
         },
         /**
          * 
-         * @param {string} txt 
+         * @param {string | (() => string)} txt 
          * @param {number} deletedChars
          * @param {number} char 
          * @param {number} line 
@@ -112,17 +112,18 @@ function createSourceMap(original) {
             let builtStr = original;
             let offset = 0;
             insertions.forEach(i => {
-                i.deltaLines -= original
+                const str = typeof i.txt == 'string'?i.txt:i.txt();
+                i.deltaLines = str.split('\n').length - original
                     .substring(i.char, i.char + i.deletedChars)
-                    .split('\n').length - 1;
+                    .split('\n').length;
                 for(let x = Math.min(i.deltaLines, 0); x <= Math.max(0, i.deltaLines); x++)
                     (insertsPerBuiltLine[i.line + lineoffset + x] ??= []).push(i);
                 i.finalPos = i.char + offset;
                 lineoffset += i.deltaLines;
                 builtStr = builtStr.substring(0, i.char + offset)
-                    + i.txt
+                    + str
                     + builtStr.substring(i.char + i.deletedChars + offset);
-                offset += i.txt.length - i.deletedChars;
+                offset += str.length - i.deletedChars;
             })
             const builtLinePositions = getLinePositions(builtStr);
             /**
@@ -131,11 +132,11 @@ function createSourceMap(original) {
              * @param {number} line 
              */
             function getChar(char, line=0) {
-                const index = char + builtLinePositions[line];
+                const index = char + (builtLinePositions[line] ?? builtLinePositions[builtLinePositions.length-1]);
                 const newLine = builtLinePositions.findLastIndex(v => v <= index);
                 const inserts = insertsPerBuiltLine[newLine].findLast(v => v.finalPos <= index);
                 if(!inserts) throw new Error("Internal SourceMapping error!");
-                return char - inserts?.finalPos - inserts?.txt.length + inserts?.deletedChars + inserts?.char;
+                return Math.max(0, index - inserts.finalPos - inserts.txt.length) + inserts.deletedChars + inserts.char;
             }
             return {
                 str: builtStr,
@@ -162,10 +163,8 @@ function createSourceMap(original) {
     }
     return ret
 }
-const txt = `
-    this is a funny text!
 
-`;
-const x = createSourceMap(txt).insert("meow\n", 2, 1).build();
-console.log(x.getChar(x.str.indexOf('text')));
-console.log(txt.indexOf('text'));
+
+module.exports = {
+    createSourceMap
+}

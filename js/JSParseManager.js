@@ -1,21 +1,23 @@
+//@ts-check
 const { functionNames, functionFileNames, functionOverrides, fileInfo } = clawffeeInternals.commandGlobals;
 
 const acorn = require("acorn");
 const acorn_walk = require("acorn-walk");
+const { createSourceMap } = require("./SourceMaps/SourceMapSys");
 const prettyPrepareStack = require('../clawffeeInternals').prettyPrepareStack;
 
 // TODO add callback that callback in file got ran for GUI
 
+/**
+ * 
+ * @param {string} codeStr 
+ * @returns 
+ */
 function parseJS(codeStr) {
-    const parsedCode = acorn.parse(codeStr, {
+    return acorn.parse(codeStr, {
         ecmaVersion: "latest",
         sourceType: "module"
     });
-    const newLinePositions = [{index: -1}, ...codeStr.matchAll(new RegExp('\n', 'gi'))].map(a => a.index + 1);
-    return {
-        parsedCode: parsedCode,
-        newLinePositions: newLinePositions
-    }
 }
 
 /**
@@ -42,14 +44,28 @@ function addVariable(filename, prefix, codeStr) {
     allVariables.add(iterstr);
     return iterstr;
 }
-
-function applyOverrides(filename, codeStr, parsedCode, newLinePositions) {
-    const inverseCommands = [];
+/**
+ * 
+ * @param {string} filename 
+ * @param {string} codeStr 
+ * @param {import('acorn').Node} parsedCode 
+ * @returns 
+ */
+function applyOverrides(filename, codeStr, parsedCode) {
+    const sourceMap = createSourceMap(codeStr);
+    /**
+     * 
+     * @param {import("acorn").WhileStatement |
+     * import("acorn").DoWhileStatement |
+     * import("acorn").ForStatement |
+     * import("acorn").ForInStatement |
+     * import("acorn").ForOfStatement} node 
+     */
     function whileWrapper(node) {
         const iterstr = addVariable(filename, "while_protection", codeStr);
-        inverseCommands.push([node.start, () => `let ${iterstr}=0;`]);
-        inverseCommands.push([node.body.start, () => `{if(${iterstr}++>0xFFFFFFF){throw Error("Discovered infinite loop!")}`]);
-        inverseCommands.push([node.body.end, () => `}`]);
+        sourceMap.insert(`let ${iterstr}=0;`, node.start);
+        sourceMap.insert(`{if(${iterstr}++>0xFFFFFFF){throw Error("Discovered infinite loop!")}`, node.body.start);
+        sourceMap.insert(`}`, node.body.end);
     }
 
     acorn_walk.simple(parsedCode, {
@@ -60,54 +76,45 @@ function applyOverrides(filename, codeStr, parsedCode, newLinePositions) {
         ForOfStatement: whileWrapper,
         FunctionDeclaration: (node, state) => {
             const funcstr = addVariable(filename, "function_name", codeStr);
-            inverseCommands.push([node.start, () => `let ${node.id.name} = globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},`]);
-            inverseCommands.push([node.id.start, () => `${funcstr}_`]);
-            inverseCommands.push([node.end, () => `,"${node.id.name}")`]);
+            if(node.id) {
+                sourceMap.insert(`let ${node.id.name} = globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},`, node.start);
+                sourceMap.insert(`${funcstr}_`, node.id.start);
+                sourceMap.insert(`,"${node.id.name}")`, node.end);
+            } else {
+                const params = node.params.map(v => codeStr.substring(v.start, v.end)).join(', ');
+                sourceMap.insert(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params}) {(`, node.start);
+                sourceMap.insert(`});`, node.body.start+1);
+                sourceMap.insert(`)`, node.end);
+            }
         },
         Property: (node, state) => {
             if(node.value.type != 'FunctionExpression') return;
             if(node.method) {
-                inverseCommands.push([node.key.end, () => `:`]);
-                inverseCommands.push([node.value.body.start, () => `=>`]);
+                sourceMap.insert(":", node.key.end);
+                sourceMap.insert("=>", node.value.body.start);
             }
         },
         FunctionExpression: (node, state) => {
             const funcstr = addVariable(filename, "function_name", codeStr);
-            inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},{${funcstr}:`]);
-            inverseCommands.push([node.end, () => `}.${funcstr})`]);
+            const params = node.params.map(v => codeStr.substring(v.start, v.end)).join(', ');
+            sourceMap.insert(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params}) {(`, node.start);
+            sourceMap.insert(`});`, node.body.start+1);
+            sourceMap.insert(`)`, node.end);
         },
         ArrowFunctionExpression: (node, state) => {
             const funcstr = addVariable(filename, "function_name", codeStr);
-            inverseCommands.push([node.start, () => `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},{${funcstr}:`]);
-            inverseCommands.push([node.end, () => `}.${funcstr})`]);
+            const params = node.params.map(v => codeStr.substring(v.start, v.end)).join(', ');
+            sourceMap.insert(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(${params}) {(`, node.start);
+            sourceMap.insert(`});`, node.body.start+1);
+            sourceMap.insert(`)`, node.end);
         },
     });
-    const insertions = {};
-
-    let previousLine = newLinePositions.length-1;
-    inverseCommands.sort((a,b) => b[0] - a[0]).forEach(v => {
-        const insertTxt = (v[1]() ?? "").replace("\n",";");
-
-        // find line and column of insertion
-        while(v[0] < newLinePositions[previousLine]) previousLine--;
-        insertions[previousLine+1] = insertions[previousLine+1] ?? [];
-        insertions[previousLine+1].forEach(v => v.p += insertTxt.length);
-        insertions[previousLine+1].push({p: v[0] - newLinePositions[previousLine], l: insertTxt.length});
-        for(let i = previousLine+1; i < newLinePositions.length; i++) {
-            newLinePositions[i] += insertTxt.length;
-        }
-
-        codeStr = codeStr.substring(0,v[0]) + insertTxt + codeStr.substring(v[0]);
-    });
-    return {
-        editedCode: codeStr,
-        insertions: insertions
-    };
+    return sourceMap.build();
 }
 
 /**
  * Add a function with overriden variables to use in the error log
- * @param {string} filename fake file name to assign to the function
+ * @param {string} name fake file name to assign to the function
  * @param {Function} fn the function to have its data overriden
  * @param {string} fakename the name to use for function.name
  */
@@ -117,19 +124,27 @@ globalThis.clawffeeInternals.addFunction = (name, fn, fakename) => {
      */
     functionNames.set(fn.name, fakename);
     functionFileNames.set(fn.name, name);
-    fileInfo.get(name).functions.add(fn.name);
+    fileInfo.get(name)?.functions.add(fn.name);
     return fn;
 }
-
+/**
+ * 
+ * @param {string} filename 
+ * @param {string} codeStr 
+ * @returns 
+ */
 function wrapCode(filename, codeStr) {
     // syntax check
     try {
         const fn = new Function(codeStr);
     } catch(e) {
         if(e instanceof SyntaxError) {
+            //@ts-ignore
             e.stack = [{
                 getFileName: () => filename,
+            //@ts-ignore
                 getLineNumber: () => e.line-1,
+            //@ts-ignore
                 getColumnNumber: () => e.column,
                 getFunctionName: () => "top_level",
                 isToplevel: () => true
@@ -142,7 +157,7 @@ function wrapCode(filename, codeStr) {
         throw e;
     }
     try {
-        const { parsedCode, newLinePositions } = parseJS(codeStr);
+        const parsedCode = parseJS(codeStr);
         // temporary error if import statements are used
         acorn_walk.simple(parsedCode, {
             ImportDeclaration: () => {
@@ -158,21 +173,20 @@ function wrapCode(filename, codeStr) {
                 throw new SyntaxError("Export statements are not yet supported in Clawffee scripts.");
             }
         });
-        const { editedCode, insertions } = applyOverrides(filename, codeStr, parsedCode, newLinePositions);
+        const compiledCode = applyOverrides(filename, codeStr, parsedCode);
         const rootfuncstr = addVariable(filename, "function_name", codeStr);
         functionNames.set(rootfuncstr, "top_level");
         functionFileNames.set(rootfuncstr, filename);
         functionOverrides.set(filename, {
-            getLineNumber(original, _) { return original-3 },
-            isToplevel(_, fnname) { return fnname === rootfuncstr }
+            getLineNumber(original, _) { return compiledCode.getPos(original.getColumnNumber()??0, (original.getLineNumber()??4) - 4).line + 1; },
+            getColumnNumber(original, _) { return compiledCode.getPos(original.getColumnNumber()??0, (original.getLineNumber()??4) - 4).column; },
+            isToplevel(__, _, fname) { return fname === rootfuncstr; }
         });
         fileInfo.set(filename, {
             variables: allVariables,
-            functions: new Set([rootfuncstr]),
-            insertions: insertions,
-            newLines: newLinePositions
+            functions: new Set([rootfuncstr])
         });
-        acorn.parse(editedCode, {
+        acorn.parse(compiledCode.str, {
             ecmaVersion: 'latest',
             sourceType: "module",
         });
@@ -185,7 +199,7 @@ function wrapCode(filename, codeStr) {
             __filename	The absolute path to the current module file.
             __dirname	The absolute path to the directory containing the current module file.
         */
-        const fn = Function("", `function ${rootfuncstr}(exports, require, module, __fileName, __dirname){\n${editedCode}\n} return ${rootfuncstr}`)();
+        const fn = Function("", `function ${rootfuncstr}(exports, require, module, __fileName, __dirname){\n${compiledCode.str}\n} return ${rootfuncstr}`)();
         return fn;
     } catch(e) {
         if(e instanceof SyntaxError) {
