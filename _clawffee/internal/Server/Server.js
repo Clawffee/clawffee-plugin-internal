@@ -12,6 +12,34 @@ const {port} = require('../../../../../config/internal/server.json');
 const builtHTML = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/UI.html"], target: 'browser', splitting: false, compile: true}).then((value) => value.outputs[0]);
 const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/Connect.js"], target: 'browser', splitting: false}).then((value) => value.outputs[0]);
 /**
+ * @type {{[pluginName: string]: {page: Uint8Array<ArrayBuffer>, script: Uint8Array<ArrayBuffer> | undefined}}}
+ */
+const pluginPages = {};
+sharedServerData.internal.pluginPages = {};
+
+/**
+ * 
+ * @param {string} pluginName 
+ * @param {string} UIPath 
+ * @param {string?} iconPath
+ * @param {string?} scriptPath
+ */
+async function addPluginTab(pluginName, UIPath, iconPath=null, scriptPath=null) {
+    if(!UIPath.endsWith(".html")) {
+        throw TypeError('Plugin Tab needs to be an html file');
+    }
+    const page = await Bun.build({entrypoints: [UIPath], target: 'browser', splitting: false, compile: true});
+    const script = (scriptPath?await Bun.build({entrypoints: [scriptPath], target: 'browser', splitting: false}):null);
+    pluginPages[pluginName] = {
+        page: await page.outputs[0].bytes(),
+        script: await script?.outputs[0].bytes()
+    };
+    sharedServerData.internal.pluginPages[pluginName] = {
+        icon: (iconPath?fs.readFileSync(iconPath).toString():null),
+        hasScript: scriptPath?true:false
+    } 
+}
+/**
  * @type {Bun.Server<any>}
  */
 const server = Bun.serve({
@@ -89,6 +117,14 @@ const server = Bun.serve({
     },
     routes: {
         "/internal/dashboard/": async (req) => new Response(await builtHTML),
+        "/internal/dashboard/plugin/page/:plugin": async (req) => {
+            if(!pluginPages[req.params.plugin]) return new Response("", {status: 404})
+            return new Response(pluginPages[req.params.plugin].page);
+        },
+        "/internal/dashboard/plugin/script/:plugin": async (req) => {
+            if(!pluginPages[req.params.plugin]?.script) return new Response("", {status: 404})
+            return new Response(pluginPages[req.params.plugin].script);
+        },
         "/internal/connect.js": async (req) => new Response(await builtConnect),
         "/favicon.ico": Bun.file("assets/clawffee.ico"),
         "/internal/dashboard/images/:image": (req) => {
@@ -132,5 +168,6 @@ module.exports = {
     functions,
     config: {
         port: 4444
-    }
+    },
+    addPluginTab
 }
