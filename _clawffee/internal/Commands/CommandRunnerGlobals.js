@@ -3,13 +3,6 @@
  * @typedef fileInfo
  * @prop {Set<string>} variables
  * @prop {Set<string>} functions
- * @prop {{
- *  p: number,
- *  e: number,
- *  v: string,
- *  l: number
- * }[][]} insertions
- * @prop {number[]} newLines
  */
 clawffeeInternals.commandGlobals = {
     /**
@@ -25,7 +18,14 @@ clawffeeInternals.commandGlobals = {
      */
     functionFileNames: new Map(),
     /**
-     * @type {Map<string, any>}
+     * @typedef {(
+     *  v: NodeJS.CallSite, 
+     *  value: NodeJS.CallSite[T], 
+     *  string) => ReturnType<NodeJS.CallSite[T]>} stackOverride
+     * @template {keyof NodeJS.CallSite} T
+     */
+    /**
+     * @type {Map<string, {[key in keyof NodeJS.CallSite]?: stackOverride<key>}>}
      */
     functionOverrides: new Map(),
     /**
