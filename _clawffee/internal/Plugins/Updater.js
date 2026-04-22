@@ -164,6 +164,8 @@ async function initUpdate(path, data) {
 
 const fs = require('fs');
 const path = require('path');
+const { sharedServerData } = require('../Server/SharedServerData');
+const internal = require('../../../internal');
 
 function verifyModules() {
     const { promise, resolve, reject } = Promise.withResolvers();
@@ -231,6 +233,11 @@ function verifyModules() {
     });
     return promise;
 }
+
+sharedServerData.internal.updateInfo = {
+    version: config.version,
+    availableUpdates: null
+};
 
 console.log(`\u001b[0m\n Clawffee Version \u001b[33;1m${config.version}\u001b[0m 🐾`);
 

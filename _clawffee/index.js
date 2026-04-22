@@ -1,6 +1,13 @@
 //@ts-check
 (async() => {
-    const { config: server} = require('./internal/Server/Server');
+    const { awaitConnection, config: server} = require('./internal/Server/Server');
+    try {
+        await awaitConnection;
+    } catch(e) {
+        console.error(e);
+        require('fs').writeFileSync("./log.txt", require('util').inspect(e));
+        return;
+    }
     const updater = require('./internal/Plugins/Updater');
     while(!await updater.verifyModules());
     console.log("\n Join the discord! \u001b[32;1;3;4mhttps://discord.gg/744T53nJFu\u001b[0m");

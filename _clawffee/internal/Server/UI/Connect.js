@@ -24,10 +24,21 @@ let ws;
 const {create, call} = /**@type {import('../../Hooks/HookHelper').HookHelper<(path: string[], data: any) => void>} **/ (require('../../Hooks/HookHelper').simpleHookMgr());
 const {create: createAlways, call: callAlways} = /**@type {import('../../Hooks/HookHelper').HookHelper<(path: string[], data: any) => void>} **/ (require('../../Hooks/HookHelper').simpleHookMgr());
 
-function getSubObject(path) {
-    
+/**
+ *  
+ * @param {string[]} path 
+ * @param {any} obj 
+ */
+function getSubObject(path, obj) {
+    path = [...path];
+    let p;
+    while(obj && (p = path.shift())) {
+        //@ts-ignore
+        obj = obj[p];
+    }
+    return obj;
 }
-
+let firstConnect = true;
 /**
  * 
  * @param {number} timeout 
@@ -39,7 +50,8 @@ function reconnect(timeout=0) {
     let firstMsg = true
     ws = new WebSocket(`ws://${url}`);
     ws.onopen = () => {
-        console.info("Connected to Clawffee!");
+        if(!firstConnect) console.info("Reconnected to Clawffee!");
+        firstConnect = false;
         timeout = 0;
         nextTimeout = 0;
         clearTimeout(msg);
@@ -56,9 +68,9 @@ function reconnect(timeout=0) {
         call(data.p ?? [], data.v);
     }
 }
-window.onload = () => {
+window.addEventListener('load', () => {
     setTimeout(() => reconnect(5000), 1);
-}
+});
 
 /**
  * 
@@ -70,7 +82,8 @@ export function listenToClawffee(path, callback) {
         path = path.split('/');
     }
     create((dpath, data) => {
-        if(path.some((v, i) => dpath[i] != v)) return;
+        if(path.some((v, i) => dpath[i] && dpath[i] != v)) return;
+        data = getSubObject(path.slice(dpath.length), data);
         callback(dpath.slice(path.length), data);
     });
 }
@@ -84,7 +97,8 @@ export function getFromClawffee(path, callback) {
         path = path.split('/');
     }
     createAlways((dpath, data) => {
-        if(path.some((v, i) => dpath[i] != v)) return;
+        if(path.some((v, i) => dpath[i] && dpath[i] != v)) return;
+        data = getSubObject(path.slice(dpath.length), data);
         callback(dpath.slice(path.length), data);
     });
 }

@@ -58,14 +58,15 @@ function createRequire(basePath, module) {
 }
 
 function createModule(path) {
-    const mod = {};
-    mod.exports = {};
-    mod.path = path;
-    mod.id = path;
-    mod.filename = path;
-    mod.loaded = false;
-    mod.children = [];
-    mod.isPreloading = false;
+    const mod = {
+        exports: {},
+        path: path,
+        id: path,
+        filename: path,
+        loaded: false,
+        children: [],
+        isPreloading: false,
+    }
     mod.require = createRequire(path, mod);
     return mod;
 }

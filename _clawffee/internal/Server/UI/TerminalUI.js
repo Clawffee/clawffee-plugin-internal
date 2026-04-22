@@ -1,5 +1,6 @@
 //@ts-check
-const log = console.log;
+
+import data from '../../../../../../config/internal/server.json';
 /**
  * https://stackoverflow.com/a/22706073
  * @param {string} str
@@ -75,7 +76,7 @@ function adjustState(output, txt, consoleState) {
                     "36": 'var(--bs-cyan)',
                     "37": 'var(--bs-white)',
                     "39": 'var(--bs-tertiary-color)',
-                    "90": 'var(--bs-grey)',
+                    "90": 'var(--bs-gray)',
                     "91": 'var(--bs-danger)',
                     "92": 'var(--bs-success)',
                     "93": 'var(--bs-warning)',
@@ -96,7 +97,7 @@ function adjustState(output, txt, consoleState) {
                     "46": 'var(--bs-cyan)',
                     "47": 'var(--bs-white)',
                     "49": 'var(--bs-tertiary-color)',
-                    "100": 'var(--bs-grey)',
+                    "100": 'var(--bs-gray)',
                     "101": 'var(--bs-danger)',
                     "102": 'var(--bs-success)',
                     "103": 'var(--bs-warning)',
@@ -214,7 +215,6 @@ function consoleifyString(txt) {
         consoleState.curCol = consoleState.depth;
     });
 
-    log(output);
     return output.reduce((p, v) => p + `<div style="translate: -${v.depth}ch">` + v.parts.reduce((p, v) => p+ "<span " + v.wrap + ">" + v.text.replaceAll('<','&gt;').replaceAll('>','&lt;').replaceAll(' ', '&MediumSpace;') + "</span>", "") + "</div>", "");
 }
 /**
@@ -270,11 +270,15 @@ window.onload = () => {
     let v;
     while (v = consoleCache.shift()) addToConsole(v.name, v.line, v.cls, v.text);
     globalThis.listenToClawffee(["log"], (rpath, data) => {
+        if(rpath[0] == 'debug' && !data.printDebug) {
+            return;
+        }
         const clsmap = {
             "info": "var(--bs-primary)",
             "error": "var(--bs-danger)",
             "warn": "var(--bs-warning)",
             "log": "var(--bs-tertiary-color)",
+            "debug": "var(--bs-gray)",
         };
         const namesplit = /(.*):([^:]*:[^:]*)/.exec(data.smallname);
         // @ts-ignore

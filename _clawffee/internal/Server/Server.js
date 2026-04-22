@@ -9,8 +9,9 @@ if(!fs.existsSync('./config/internal/server.json')) {
     }, null, 4))
 }
 const {port} = require('../../../../../config/internal/server.json');
-const builtHTML = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/UI.html"], target: 'browser', splitting: false, compile: true}).then((value) => value.outputs[0]);
-const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/Connect.js"], target: 'browser', splitting: false}).then((value) => value.outputs[0]);
+const firstConnection = Promise.withResolvers();
+const builtHTML = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/UI.html"], target: 'browser', splitting: false, compile: true}).then((value) => value.outputs[0], (err) => firstConnection.reject("Failed to build UI"));
+const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/Connect.js"], target: 'browser', splitting: false}).then((value) => value.outputs[0], (err) => firstConnection.reject("Failed to build Connect script:"));
 /**
  * @type {{[pluginName: string]: {page: Uint8Array<ArrayBuffer>, script: Uint8Array<ArrayBuffer> | undefined}}}
  */
@@ -55,6 +56,7 @@ const server = Bun.serve({
                     p: [],
                     v: sharedServerData
                 }));
+                firstConnection.resolve();
                 return;
             } else {
                 ws.send(JSON.stringify({
@@ -159,9 +161,7 @@ clawffeeInternals.serverFunctions = functions;
 
 sharedServerData.internal.log = {};
 addHook(({type: name, cleaneddata, smallname}) => {
-    if(name != 'debug') {
-        sharedServerData.internal.log[name] = {smallname, cleaneddata};
-    }
+    sharedServerData.internal.log[name] = {smallname, cleaneddata};
 });
 
 module.exports = {
@@ -169,5 +169,6 @@ module.exports = {
     config: {
         port: 4444
     },
-    addPluginTab
+    addPluginTab,
+    awaitConnection: firstConnection.promise
 }

@@ -224,15 +224,15 @@
             </ul>
             <hr>
             <span><span class="badge bg-primary" style="width: fit-content;" id="version-tag"></span> by Katzentatzentanz 🐾</span>
+            <script>
+                window.addEventListener('load', () => {
+                    globalThis.getFromClawffee(["updateInfo", "version"], (p, data) => {
+                        document.getElementById('version-tag').innerText = data;
+                    });
+                });
+            </script>
         </div>
     </div>
-    <script>
-        window.onload = () => {
-            globalThis.listenToClawffee([], (...data) => {
-                console.log(...data);
-            });
-        }
-    </script>
     <article>
         <div class="row row-cols-2 g-3 m-1">
             <template>
