@@ -74,7 +74,9 @@
 </head>
 
 <body>
-    <div id="overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: black; z-index: 10000000; transition: top 0.5s ease-in-out;"></div>
+    <div id="overlay"
+        style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: black; z-index: 10000000; transition: top 0.5s ease-in-out;">
+    </div>
     <script>
         const darkModeMql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -96,8 +98,7 @@
                     <h1 class="modal-title fs-5" id="pluginModalLabel">Modal title</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <iframe>
-                </iframe>
+                <iframe style="border: none; background-color: transparent;"></iframe>
             </div>
         </div>
     </div>
@@ -114,7 +115,7 @@
                     font-family: monospace;
                     font-size: 80%;
 
-                    &::after {
+                    i&::after {
                         content: "";
                         position: absolute;
                         top: 0;
@@ -211,8 +212,8 @@
             </ul>
             <script>
                 window.addEventListener('load', () => {
-                    globalThis.getFromClawffee(["updateInfo", "version"], (p, data) => {
-                        document.getElementById('version-tag').innerText = data;
+                    globalThis.getFromClawffee([], (p, data) => {
+                        console.log(p, data);
                     });
                 });
             </script>
