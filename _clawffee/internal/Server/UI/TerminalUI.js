@@ -312,3 +312,15 @@ wrapCons('info', "var(--bs-primary)");
 wrapCons('error', "var(--bs-danger)");
 wrapCons('warn', "var(--bs-warning)");
 wrapCons('log', "var(--bs-tertiary-color)");
+
+window.addEventListener('error', (event) => {
+    let n = event.filename;
+    if (n?.startsWith(windowURL)) {
+        n = "UI" + n.substring(windowURL.length);
+    }
+    addToConsole('\u001b[31m' + n, event.lineno + ":" + event.colno, "var(--bs-danger)", '\u001b[31m' + event.message);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    addToConsole("\u001b[31m[async error]", "", "var(--bs-danger)", '\u001b[31m' + event.reason);
+});

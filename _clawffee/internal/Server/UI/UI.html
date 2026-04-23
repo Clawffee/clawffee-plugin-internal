@@ -90,7 +90,7 @@
             }, 500);
         });
     </script>
-    <div class="modal fade" data-bs-backdrop="static" id="pluginModal" tabindex="-1" aria-labelledby="pluginModalLabel"
+    <div class="modal fade" id="pluginModal" tabindex="-1" aria-labelledby="pluginModalLabel"
         aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -187,9 +187,7 @@
         <div class="terminal bg-body mt-2">
             <div id="consoleWindow"></div>
         </div>
-        <script src="./TerminalUI.js">
-            console.log(test)
-        </script>
+        <script src="./TerminalUI.js"></script>
     </nav>
     <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
         <div class="offcanvas-header">
@@ -198,22 +196,51 @@
         </div>
         <div class="offcanvas-body d-flex flex-column">
             <p>Plugin Settings: </p>
-            <ul class="nav nav-pills flex-column mb-auto" style="overflow-y: auto; flex-wrap: nowrap;">
-                <li class="nav-item">
-                    <button type="button" class="nav-link" data-bs-toggle="modal" data-bs-target="#pluginModal">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                            class="bi bi-hdd-stack-fill me-2" viewBox="0 0 16 16">
-                            <path
-                                d="M2 9a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1" />
-                        </svg>
-                        Server
-                    </button>
-                </li>
+            <ul class="nav nav-pills flex-column mb-auto" style="overflow-y: auto; flex-wrap: nowrap;" id="pluginTabList">
+                <template id="pluginTab">
+                    <li class="nav-item">
+                        <button type="button" class="nav-link" data-bs-toggle="modal" data-bs-target="#pluginModal">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                class="bi bi-hdd-stack-fill me-2" viewBox="0 0 16 16">
+                                <path
+                                    d="M2 9a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1" />
+                            </svg>
+                            <span id="pluginname">Bark</span>
+                        </button>
+                    </li>
+                </template>
             </ul>
             <script>
+                const pluginTabNames = [];
+                const pluginTabButton = document.getElementById('pluginTab');
+                const pluginTabList = document.getElementById('pluginTabList');
                 window.addEventListener('load', () => {
-                    globalThis.getFromClawffee([], (p, data) => {
-                        console.log(p, data);
+                    globalThis.getFromClawffee(["pluginPages"], (p, data) => {
+                        Object.entries(data).forEach(async ([name, data]) => {
+                            if(!name) return;
+                            if(pluginTabNames.includes(name)) {
+                                const index = pluginTabNames.indexOf(name);
+                                pluginTabNames.splice(index, 1);
+                                pluginTabList.childNodes[index].remove(); // TODO: this isnt working
+                            }
+                            const copiedButton = document.importNode(pluginTabButton.content, true);
+                            const index = pluginTabNames.indexOf(v => v.localeCompare(name) > 0);
+                            pluginTabNames.splice(index, 0, name);
+                            copiedButton.querySelector('#pluginname').textContent = name;
+                            if(data.hasIcon) copiedButton.querySelector('svg').outerHTML = await (await fetch('./plugin/icon/' + name)).text();
+                            if(data.hasScript) {
+                                const scriptVal = (await (await fetch('./plugin/script/' + name)).text()) 
+                                document.body.innerHTML += 
+                                    "<script>" 
+                                    + scriptVal
+                                    + "<\/script>";
+                            }
+                            if(index == -1) {
+                                pluginTabList.appendChild(copiedButton);
+                            } else {
+                                pluginTabList.insertBefore(copiedButton, pluginTabList.childNodes[index]);
+                            }
+                        })
                     });
                 });
             </script>
@@ -252,8 +279,10 @@
                 </li>
             </ul>
             <hr>
-            <span><span class="badge bg-primary" style="width: fit-content;" id="version-tag"></span> by
-                Katzentatzentanz 🐾</span>
+            <span>
+                <span class="badge bg-primary" style="width: fit-content;" id="version-tag"></span> 
+                by Katzentatzentanz 🐾
+            </span>
             <script>
                 window.addEventListener('load', () => {
                     globalThis.getFromClawffee(["updateInfo", "version"], (p, data) => {
