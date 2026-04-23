@@ -13,7 +13,7 @@ const firstConnection = Promise.withResolvers();
 const builtHTML = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/UI.html"], target: 'browser', splitting: false, compile: true}).then((value) => value.outputs[0], (err) => firstConnection.reject("Failed to build UI"));
 const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/Connect.js"], target: 'browser', splitting: false}).then((value) => value.outputs[0], (err) => firstConnection.reject("Failed to build Connect script:"));
 /**
- * @type {{[pluginName: string]: {page: Uint8Array<ArrayBuffer>, script: Uint8Array<ArrayBuffer> | undefined}}}
+ * @type {{[pluginName: string]: {page: Uint8Array<ArrayBuffer>, script: Uint8Array<ArrayBuffer> | undefined, icon: string?}}}
  */
 const pluginPages = {};
 sharedServerData.internal.pluginPages = {};
@@ -32,20 +32,42 @@ async function addPluginTab(pluginName, UIPath, iconPath=null, scriptPath=null) 
     const page = await Bun.build({entrypoints: [UIPath], target: 'browser', splitting: false, compile: true});
     const script = (scriptPath?await Bun.build({entrypoints: [scriptPath], target: 'browser', splitting: false}):null);
     pluginPages[pluginName] = {
-        page: await page.outputs[0].bytes(),
-        script: await script?.outputs[0].bytes()
+        page: await (page.outputs[0]?.bytes?.() ?? page.outputs[0]?.text()),
+        script: await (script?.outputs[0]?.bytes?.() ?? script?.outputs[0]?.text()),
+        icon: iconPath?fs.readFileSync(iconPath).toString():null
     };
     sharedServerData.internal.pluginPages[pluginName] = {
-        icon: (iconPath?fs.readFileSync(iconPath).toString():null),
+        hasIcon: iconPath?true:false,
         hasScript: scriptPath?true:false
     } 
 }
+
+/**
+ * 
+ * @param {string} url 
+ */
+function openURL(url) {
+    url = encodeURI(url)
+    if(process.platform == 'win32') {
+        try {
+            proc = require('child_process').exec(`start "" "${url}"`)
+        } catch(e) {
+            // ignore the error since explorer always returns 1
+        }
+    } else if(process.platform == 'darwin') {
+        require('child_process').execFileSync('open', [url]);
+    } else {
+        require('child_process').execFileSync('xdg-open', [url]);
+    }
+}
+
 /**
  * @type {Bun.Server<any>}
  */
 const server = Bun.serve({
     port: port ?? 4444,
     hostname: "localhost",
+    reusePort: true,
     websocket: {
         async message(ws, message) {
         },
@@ -54,7 +76,7 @@ const server = Bun.serve({
                 ws.subscribe('internal');
                 ws.send(JSON.stringify({
                     p: [],
-                    v: sharedServerData
+                    v: sharedServerData.internal
                 }));
                 firstConnection.resolve();
                 return;
@@ -118,7 +140,9 @@ const server = Bun.serve({
         });
     },
     routes: {
-        "/internal/dashboard/": async (req) => new Response(await builtHTML),
+        "/internal/dashboard/": async (req) => {
+            return new Response(await builtHTML)
+        },
         "/internal/dashboard/plugin/page/:plugin": async (req) => {
             if(!pluginPages[req.params.plugin]) return new Response("", {status: 404})
             return new Response(pluginPages[req.params.plugin].page);
@@ -126,6 +150,10 @@ const server = Bun.serve({
         "/internal/dashboard/plugin/script/:plugin": async (req) => {
             if(!pluginPages[req.params.plugin]?.script) return new Response("", {status: 404})
             return new Response(pluginPages[req.params.plugin].script);
+        },
+        "/internal/dashboard/plugin/icon/:plugin": async (req) => {
+            if(!pluginPages[req.params.plugin]?.icon) return new Response("", {status: 404})
+            return new Response(pluginPages[req.params.plugin].icon);
         },
         "/internal/connect.js": async (req) => new Response(await builtConnect),
         "/favicon.ico": Bun.file("assets/clawffee.ico"),
@@ -171,10 +199,24 @@ worker.addEventListener('error', (err) => {
     console.log(err);
     process.exit();
 });
-worker.addEventListener('message', (err) => {
-    process.exit();
+worker.addEventListener('message', (m) => {
+    switch(m.data?.t) {
+        case 'exit': 
+            process.exit();
+        case 'open': return openURL(m.data?.v);
+    }
+});
+
+builtHTML.then(async (v) => {
+    if(!v) return console.error('cannor load');
+    worker.postMessage({t: 'load', v: await v.text()})
 })
 
+addPluginTab(
+    "Server", 
+    "plugins/internal/_clawffee/internal/Server/UI/ServerConfig.html", 
+    "plugins/internal/_clawffee/internal/Server/UI/Server.svg"
+);
 
 module.exports = {
     functions,
@@ -182,5 +224,6 @@ module.exports = {
         port: 4444
     },
     addPluginTab,
-    awaitConnection: firstConnection.promise
+    awaitConnection: firstConnection.promise,
+    openURL
 }
