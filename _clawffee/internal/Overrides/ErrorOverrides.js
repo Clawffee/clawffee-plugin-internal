@@ -243,6 +243,7 @@ Error.prepareStackTrace = (err, stack) => {
     }).join("\n    at ");
 };
 
+const cwd = process.cwd();
 /**
  * 
  * @param {Error} err 
@@ -294,6 +295,7 @@ function prettyPrepareStack(err, stack) {
     if(!s) {
         return null;
     }
+    stack.splice(stack.indexOf(s) + 1, stack.length);
     name = s.getFileName() ?? "";
     //@ts-ignore
     err.line = s.getLineNumber() ?? 0;
@@ -399,9 +401,16 @@ function prettyPrepareStack(err, stack) {
             stack.splice(x+1, 1);
             stack[x].isToplevel = () => true;
         }
+        let fileName = stack[x].getFileName() ?? "internal";
+        if(fileName.length > 0) {
+            if(fileName.startsWith(cwd)) fileName = "." + fileName.substring(cwd.length);
+            fileName = `\u001b[96m${fileName}`;
+        } else {
+            fileName = "\u001b[0minternal";
+        }
         errStr += `\n    \u001b[90mat ${
             stack[x].isToplevel()?"\u001b[0;94;1;3mtop level":stack[x].getFunctionName()?.length?`\u001b[0;1;3m${stack[x].getFunctionName()}`:"\u001b[90m<anonymous>"
-            } \u001b[0;90m(${stack[x].getFileName()?.length?`\u001b[96m${stack[x].getFileName()}`:"\u001b[0minternal"}\u001b[90m:\u001b[93m${stack[x].getLineNumber()}\u001b[90m:\u001b[93m${stack[x].getColumnNumber()}\u001b[90m)\u001b[0m`;
+            } \u001b[0;90m(${fileName}\u001b[90m:\u001b[93m${stack[x].getLineNumber()}\u001b[90m:\u001b[93m${stack[x].getColumnNumber()}\u001b[90m)\u001b[0m`;
         if(stack[x].getFileName()?.includes('node_modules')) {
             totalSlices++;
         }

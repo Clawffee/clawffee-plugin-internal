@@ -1,10 +1,11 @@
 {
   "dependencies": {
-    "acorn": "^8.15.0",
-    "acorn-walk": "^8.3.4",
+    "acorn": "^8.16.0",
+    "acorn-walk": "^8.3.5",
     "bootstrap": "^5.3.8",
     "chokidar": "^4.0.3",
-    "tar-stream": "^3.1.7",
-    "tscheck": "https://github.com/PurredCoffee/tscheck.git"
+    "tar-stream": "^3.1.8",
+    "tscheck": "https://github.com/PurredCoffee/tscheck.git",
+    "webview-bun": "^2.4.0"
   }
 }

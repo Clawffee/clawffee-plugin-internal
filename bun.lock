@@ -4,12 +4,13 @@
   "workspaces": {
     "": {
       "dependencies": {
-        "acorn": "^8.15.0",
-        "acorn-walk": "^8.3.4",
+        "acorn": "^8.16.0",
+        "acorn-walk": "^8.3.5",
         "bootstrap": "^5.3.8",
         "chokidar": "^4.0.3",
+        "tar-stream": "^3.1.8",
         "tscheck": "https://github.com/PurredCoffee/tscheck.git",
-        "tar-stream": "^3.1.7"
+        "webview-bun": "^2.4.0",
       },
     },
   },
@@ -52,8 +53,10 @@
 
     "text-decoder": ["text-decoder@1.2.7", "", { "dependencies": { "b4a": "^1.6.4" } }, "sha512-vlLytXkeP4xvEq2otHeJfSQIRyWxo/oZGEbXrtEEF9Hnmrdly59sUbzZ/QgyWuLYHctCHxFF4tRQZNQ9k60ExQ=="],
 
-    "tscheck": ["tscheck@github:PurredCoffee/tscheck#e3a7d90", { "peerDependencies": { "typescript": "^5" } }, "PurredCoffee-tscheck-e3a7d90"],
+    "tscheck": ["tscheck@github:PurredCoffee/tscheck#e3a7d90", { "peerDependencies": { "typescript": "^5" } }, "PurredCoffee-tscheck-e3a7d90", "sha512-AOQKVmt/TTDHgYzKIoF/oxUae41cqqh/4NMhqRztA5lm+GMG49WsZY1rMeFa/zgTtfRHaLErW0xo8yiltxV7qw=="],
 
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "webview-bun": ["webview-bun@2.4.0", "", {}, "sha512-0+ugnQlcUHmuW+iLeb+Lzb8rGUJh7WEdXvNsuvaVEXT3EagK380XdD7heVJu0Ek/mNxMY3G2JM142YRQ1hDUGQ=="],
   }
 }
