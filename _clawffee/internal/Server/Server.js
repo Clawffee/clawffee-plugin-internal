@@ -50,14 +50,14 @@ function openURL(url) {
     url = encodeURI(url)
     if(process.platform == 'win32') {
         try {
-            proc = require('child_process').exec(`start "" "${url}"`)
+            require('child_process').exec(`start "" "${url}"`)
         } catch(e) {
             // ignore the error since explorer always returns 1
         }
     } else if(process.platform == 'darwin') {
-        require('child_process').execFileSync('open', [url]);
+        require('child_process').execFile('open', [url]);
     } else {
-        require('child_process').execFileSync('xdg-open', [url]);
+        require('child_process').execFile('xdg-open', [url]);
     }
 }
 
