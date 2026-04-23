@@ -164,7 +164,9 @@ addHook(({type: name, cleaneddata, smallname}) => {
     sharedServerData.internal.log[name] = {smallname, cleaneddata};
 });
 
-const worker = new Worker("plugins/internal/_clawffee/internal/Server/UI/Launch.js");
+const worker = new Worker("plugins/internal/_clawffee/internal/Server/UI/Launch.js", {
+    smol: true
+});
 worker.addEventListener('error', (err) => {
     console.log(err);
     process.exit();

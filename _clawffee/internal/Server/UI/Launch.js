@@ -10,7 +10,7 @@ import('webview-bun').then(async ({Webview}) => {
         width: 720,
         hint: 1
     });
-    w.title = "Hello World";
+    w.title = "Clawffee";
     w.navigate(`http://localhost:${port}/internal/dashboard/`);
     w.run();
     self.postMessage('exit');
