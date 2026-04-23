@@ -83,7 +83,10 @@
         }
         window.addEventListener('load', () => {
             document.getElementById('overlay').style.top = "100vh";
-        })
+            setTimeout(() => {
+                document.getElementById('overlay').remove();
+            }, 500);
+        });
     </script>
     <div class="modal fade" data-bs-backdrop="static" id="pluginModal" tabindex="-1" aria-labelledby="pluginModalLabel"
         aria-hidden="true">
