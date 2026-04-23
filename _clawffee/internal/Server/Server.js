@@ -167,7 +167,11 @@ addHook(({type: name, cleaneddata, smallname}) => {
 const worker = new Worker("plugins/internal/_clawffee/internal/Server/UI/Launch.js");
 worker.addEventListener('error', (err) => {
     console.log(err);
+    process.exit();
 });
+worker.addEventListener('message', (err) => {
+    process.exit();
+})
 
 
 module.exports = {

@@ -1,3 +1,8 @@
+//@ts-check
+/**
+ * @var {Worker} self
+ */
+
 import { port } from "../../../../../../config/internal/server.json"
 import('webview-bun').then(async ({Webview}) => {
     let w = new Webview(false, {
@@ -8,4 +13,5 @@ import('webview-bun').then(async ({Webview}) => {
     w.title = "Hello World";
     w.navigate(`http://localhost:${port}/internal/dashboard/`);
     w.run();
+    self.postMessage('exit');
 })
