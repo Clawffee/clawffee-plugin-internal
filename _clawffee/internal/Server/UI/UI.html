@@ -116,6 +116,11 @@
             const div = document.createElement('div');
             div.innerHTML = await (await fetch(url)).text();
             pluginFrame.replaceChildren(...div.children);
+            pluginFrame.querySelectorAll('script').forEach(v => {
+                let script = document.createElement('script');
+                script.innerHTML = v.innerHTML;
+                v.parentElement.replaceChild(script, v);
+            });
         }
     </script>
     <nav class="navbar fixed-bottom bg-body-tertiary">

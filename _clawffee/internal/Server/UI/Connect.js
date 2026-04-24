@@ -71,8 +71,9 @@ function reconnect(timeout=0) {
         data.p ??= [];
         if(data.p.length == 0) {
             backup = data.v;
+        } else {
+            getSubObject(data.p.slice(0, data.p.length-1), backup)[data.p[data.p.length-1]] = data.v;
         }
-        getSubObject(data.p.slice(0, data.p.length-1), backup)[data.p[data.p.length-1]] = data.v;
         callAlways(data.p, data.v);
         if(!firstMsg) return firstMsg = true;
         call(data.p, data.v);

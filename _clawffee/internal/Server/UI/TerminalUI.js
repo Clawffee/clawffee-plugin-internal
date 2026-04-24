@@ -8,6 +8,7 @@ import config from '../../../../../../config/internal/server.json';
 function escapeHTML(str) {
     return new Option(str).innerHTML;
 }
+
 /**
  * @typedef consoleState
  *
@@ -215,8 +216,22 @@ function consoleifyString(txt) {
         consoleState.curCol = consoleState.depth;
     });
 
-    return output.reduce((p, v) => p + `<div style="translate: -${v.depth}ch">` + v.parts.reduce((p, v) => p+ "<span " + v.wrap + ">" + v.text.replaceAll('<','&gt;').replaceAll('>','&lt;').replaceAll(' ', '&MediumSpace;') + "</span>", "") + "</div>", "");
+    return output.reduce((p, v) => p + `<div style="translate: -${v.depth}ch">` + v.parts.reduce((p, v) => p+ "<span " + v.wrap + ">" + escapeHTML(v.text).replaceAll(' ', '&MediumSpace;') + "</span>", "") + "</div>", "");
 }
+
+/**
+ *  
+ * @param {any} value 
+ */
+function stringify(value, space=4) {
+    const set = new Set();
+    return JSON.stringify(value, (key, value) => {
+        if(set.has(value)) return '[RECURSIVE]';
+        set.add(value);
+        return value;
+    }, space);
+}
+
 /**
  * @type {{name: string, line: string, cls: string, text: string}[]}
  */
@@ -305,7 +320,7 @@ function wrapCons(name, cls) {
             n = "UI" + n.substring(windowURL.length);
         }
         bak(line?.[0], ...data);
-        addToConsole(n ?? "[unknown]", line?.[2] ?? "", cls, data.map(v => (typeof v == 'object') ? JSON.stringify(v) : String(v)).join(' '));
+        addToConsole(n ?? "[unknown]", line?.[2] ?? "", cls, data.map(v => (typeof v == 'object') ? stringify(v) : String(v)).join(' '));
     }
 }
 wrapCons('info', "var(--bs-primary)");

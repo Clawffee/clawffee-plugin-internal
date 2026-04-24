@@ -1,6 +1,6 @@
 <form id="contactForm">
     <div class="form-floating mb-3">
-        <input class="form-control" id="port" type="text" placeholder="Port" data-sb-validations="required" />
+        <input class="form-control" id="port" type="number" placeholder="Port" data-sb-validations="required" />
         <label for="port">Port</label>
         <div class="invalid-feedback" data-sb-feedback="port:required">Port is required.</div>
     </div>
@@ -14,3 +14,8 @@
         <button class="btn btn-primary disabled" id="submitButton" type="submit">Save</button>
     </div>
 </form>
+<script>
+    window.getFromClawffee([], (p, meow) => {
+        console.log(p, meow);
+    });
+</script>
