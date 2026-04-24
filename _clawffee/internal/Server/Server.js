@@ -220,6 +220,10 @@ addPluginTab(
     "plugins/internal/_clawffee/internal/Server/UI/ServerConfig.html", 
     "plugins/internal/_clawffee/internal/Server/UI/Server.svg"
 );
+functions['/internal/dashboard/plugin/save/Server/'] = (req) => {
+    console.log(req);
+    return "Success";
+}
 
 module.exports = {
     functions,

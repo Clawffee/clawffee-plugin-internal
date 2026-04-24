@@ -113,7 +113,9 @@
          */
         async function loadPage(url, name) {
             document.getElementById('pluginModalLabel').innerText = name + " Settings";
-            pluginFrame.innerHTML = await (await fetch(url)).text();
+            const div = document.createElement('div');
+            div.innerHTML = await (await fetch(url)).text();
+            pluginFrame.replaceChildren(...div.children);
         }
     </script>
     <nav class="navbar fixed-bottom bg-body-tertiary">

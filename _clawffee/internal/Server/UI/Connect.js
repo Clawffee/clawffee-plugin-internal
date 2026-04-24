@@ -18,6 +18,10 @@ const url = convertURL(
         ?.value
 );
 /**
+ * @type {any}
+ */
+let backup;
+/**
  * @type {WebSocket}
  */
 let ws;
@@ -32,12 +36,13 @@ const {create: createAlways, call: callAlways} = /**@type {import('../../Hooks/H
 function getSubObject(path, obj) {
     path = [...path];
     let p;
-    while(obj && (p = path.shift())) {
+    while(obj !== undefined && (p = path.shift())) {
         //@ts-ignore
         obj = obj[p];
     }
     return obj;
 }
+
 let firstConnect = true;
 /**
  * 
@@ -63,9 +68,14 @@ function reconnect(timeout=0) {
     }
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        callAlways(data.p ?? [], data.v);
+        data.p ??= [];
+        if(data.p.length == 0) {
+            backup = data.v;
+        }
+        getSubObject(data.p.slice(0, data.p.length-1), backup)[data.p[data.p.length-1]] = data.v;
+        callAlways(data.p, data.v);
         if(!firstMsg) return firstMsg = true;
-        call(data.p ?? [], data.v);
+        call(data.p, data.v);
     }
 }
 window.addEventListener('load', () => {
@@ -95,6 +105,10 @@ export function listenToClawffee(path, callback) {
 export function getFromClawffee(path, callback) {
     if(typeof path == 'string') {
         path = path.split('/');
+    }
+    if(backup !== undefined) {
+        const x = getSubObject(path, backup);
+        if(x !== undefined) callback([], x);
     }
     createAlways((dpath, data) => {
         if(path.some((v, i) => dpath[i] && dpath[i] != v)) return;

@@ -315,10 +315,10 @@ wrapCons('log', "var(--bs-tertiary-color)");
 
 window.addEventListener('error', (event) => {
     let n = event.filename;
-    if (n?.startsWith(windowURL)) {
-        n = "UI" + n.substring(windowURL.length);
+    if (n?.startsWith(window.location.href)) {
+        n = "UI" + n.substring(window.location.href.length);
     }
-    addToConsole('\u001b[31m' + n, event.lineno + ":" + event.colno, "var(--bs-danger)", '\u001b[31m' + event.message);
+    addToConsole('\u001b[31m' + n, ":" + event.lineno + ":" + event.colno, "var(--bs-danger)", '\u001b[31m' + event.message);
 });
 
 window.addEventListener('unhandledrejection', (event) => {
