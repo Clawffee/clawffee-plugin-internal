@@ -211,7 +211,10 @@ worker.addEventListener('message', (m) => {
 });
 
 builtHTML.then(async (v) => {
-    if(!v) return console.error('cannor load');
+    if(!v) {
+        console.error('cannot load');
+        process.exit();
+    }
     worker.postMessage({t: 'load', v: await v.text()})
 })
 

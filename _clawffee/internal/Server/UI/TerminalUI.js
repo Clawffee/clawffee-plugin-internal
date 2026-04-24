@@ -289,7 +289,7 @@ window.onload = () => {
             return;
         }
         const clsmap = {
-            "info": "var(--bs-primary)",
+            "info": "var(--bs-cyan)",
             "error": "var(--bs-danger)",
             "warn": "var(--bs-warning)",
             "log": "var(--bs-tertiary-color)",

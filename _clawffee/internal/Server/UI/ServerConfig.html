@@ -1,4 +1,4 @@
-<form id="contactForm">
+<div id="contactForm">
     <div class="form-floating mb-3">
         <input class="form-control" id="port" type="number" placeholder="Port" data-sb-validations="required" />
         <label for="port">Port</label>
@@ -11,13 +11,47 @@
         </div>
     </div>
     <div class="d-flex flex-end">
-        <button class="btn btn-primary disabled" id="submitButton" type="submit">Save</button>
+        <button class="btn btn-primary disabled" id="submitButton">Save</button>
     </div>
-</form>
+</div>
 <script>
+{
     const doc = document.currentScript.parentElement;
+    /**
+     * @type {HTMLInputElement}
+     */
+    const port = doc.querySelector("#port");
+    /**
+     * @type {HTMLInputElement}
+     */
+    const printDebug = doc.querySelector("#logDebugValues");
+    /**
+     * @type {HTMLButtonElement}
+     */
+    const saveButton = doc.querySelector('#submitButton');
+    let changes = {};
     window.getFromClawffee(["serverConfig"], (p, data) => {
-        doc.querySelector("#port").value = data.port;
-        doc.querySelector("#logDebugValues").value = data.printDebug;
+        port.value = data.port;
+        port.placeholder = data.port;
+        port.onchange = () => {
+            changes.port = port.value;
+            saveButton.ariaDisabled = false;
+            saveButton.classList.remove('disabled');
+        }
+        printDebug.value = data.printDebug;
+        printDebug.onchange = () => {
+            changes.printDebug = printDebug.value;
+            saveButton.ariaDisabled = false;
+            saveButton.classList.remove('disabled');
+        }
+        saveButton.onclick = () => {
+            fetch('')
+        }
+        saveButton.onkeyup = (ev) => {
+            if(ev.key == '\n') {
+                saveButton.click();
+            }
+        }
     });
+}
 </script>
