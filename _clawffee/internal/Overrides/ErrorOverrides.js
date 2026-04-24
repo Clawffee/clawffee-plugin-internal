@@ -286,16 +286,19 @@ function prettyPrepareStack(err, stack) {
     }
 
     stack = stack.concat(prefixStack);
-    stack.forEach(v => {
+    let lastStack = stack.length;
+    stack.forEach((v, i) => {
         //@ts-ignore
-        if(overrideStack(v))
-            s = s ?? v;
+        if(overrideStack(v)) {
+            s ??= v;
+            lastStack = i;
+        }
     });
-    s = s ?? stack[0];
+    s ??= stack[0];
     if(!s) {
         return null;
     }
-    stack.splice(stack.indexOf(s) + 1, stack.length);
+    stack.splice(lastStack + 1, stack.length);
     name = s.getFileName() ?? "";
     //@ts-ignore
     err.line = s.getLineNumber() ?? 0;

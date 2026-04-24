@@ -107,13 +107,23 @@ function applyOverrides(filename, codeStr, parsedCode) {
         },
         ArrowFunctionExpression: (node, state) => {
             const funcstr = addVariable(filename, "function_name", codeStr);
-            if(node.params.length > 0) {
-                sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(`, node.params[0].start - node.start, node.start);
-                sourceMap.replace(`)`, node.body.start - node.params[node.params.length-1].end, node.params[node.params.length-1].end);
+            if(node.body.type == 'BlockStatement') {
+                if(node.params.length > 0) {
+                    sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(`, node.params[0].start - node.start, node.start);
+                    sourceMap.replace(`)`, node.body.start - node.params[node.params.length-1].end, node.params[node.params.length-1].end);
+                } else {
+                    sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}()`, node.body.start - node.start, node.start);
+                }
+                sourceMap.insert(`)`, node.end);
             } else {
-                sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}()`, node.body.start - node.start, node.start);
+                if(node.params.length > 0) {
+                    sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(`, node.params[0].start - node.start, node.start);
+                    sourceMap.replace(`){return `, node.body.start - node.params[node.params.length-1].end, node.params[node.params.length-1].end);
+                } else {
+                    sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(){return `, node.body.start - node.start, node.start);
+                }
+                sourceMap.insert(`})`, node.end);
             }
-            sourceMap.insert(`)`, node.end);
         },
     });
     return sourceMap.build();
