@@ -353,7 +353,7 @@ function prettyPrepareStack(err, stack) {
                         });
                         return;
                     }
-                    if(node.callee.type == 'FunctionExpression') { return; }
+                    if(node.callee.type != 'Identifier') return;
                     notations.push({
                         s: node.callee.start, e: node.callee.end, v: "\u001b[96m"
                     });
