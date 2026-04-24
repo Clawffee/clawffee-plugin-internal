@@ -152,8 +152,12 @@ const server = Bun.serve({
             return new Response(pluginPages[req.params.plugin].script);
         },
         "/internal/dashboard/plugin/icon/:plugin": async (req) => {
-            if(!pluginPages[req.params.plugin]?.icon) return new Response("", {status: 404})
-            return new Response(pluginPages[req.params.plugin].icon);
+            let x = req.params.plugin;
+            if(x.endsWith('.svg')) {
+                x = x.substring(0, x.length-4);
+            }
+            if(!pluginPages[x]?.icon) return new Response("", {status: 404})
+            return new Response(pluginPages[x].icon);
         },
         "/internal/connect.js": async (req) => new Response(await builtConnect),
         "/favicon.ico": Bun.file("assets/clawffee.ico"),
