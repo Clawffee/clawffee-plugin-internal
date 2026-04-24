@@ -143,15 +143,17 @@ const server = Bun.serve({
             return new Response(await builtHTML)
         },
         "/internal/dashboard/plugin/page/:plugin": async (req) => {
-            if(!pluginPages[req.params.plugin]) return new Response("", {status: 404})
-            return new Response(pluginPages[req.params.plugin].page, {headers: { "content-type": "text/html;charset=utf-8" }});
+            let x = decodeURI(req.params.plugin);
+            if(!pluginPages[x]) return new Response("", {status: 404})
+            return new Response(pluginPages[x].page, {headers: { "content-type": "text/html;charset=utf-8" }});
         },
         "/internal/dashboard/plugin/script/:plugin": async (req) => {
-            if(!pluginPages[req.params.plugin]?.script) return new Response("", {status: 404})
-            return new Response(pluginPages[req.params.plugin].script);
+            let x = decodeURI(req.params.plugin);
+            if(!pluginPages[x]?.script) return new Response("", {status: 404})
+            return new Response(pluginPages[x].script);
         },
         "/internal/dashboard/plugin/icon/:plugin": async (req) => {
-            let x = req.params.plugin;
+            let x = decodeURI(req.params.plugin);
             if(x.endsWith('.svg')) {
                 x = x.substring(0, x.length-4);
             }
@@ -219,7 +221,7 @@ builtHTML.then(async (v) => {
 })
 
 addPluginTab(
-    "Server", 
+    "Server & GUI", 
     "plugins/internal/_clawffee/internal/Server/UI/ServerConfig.html", 
     "plugins/internal/_clawffee/internal/Server/UI/Server.svg"
 );
