@@ -83,6 +83,7 @@
         if (darkModeMql && darkModeMql.matches) {
             document.body.setAttribute('data-bs-theme', 'dark');
         }
+
         window.addEventListener('load', () => {
             document.getElementById('overlay').style.top = "100vh";
             setTimeout(() => {
@@ -91,16 +92,29 @@
         });
     </script>
     <div class="modal fade" id="pluginModal" tabindex="-1" aria-labelledby="pluginModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h1 class="modal-title fs-5" id="pluginModalLabel">Modal title</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <iframe style="border: none; background-color: transparent;"></iframe>
+                <div class="modal-body">
+                    <div id="pluginFrame">
+
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    <script>
+        const pluginFrame = document.getElementById('pluginFrame');
+        /**
+         * @param {string} url
+         */
+        async function loadPage(url) {
+            pluginFrame.innerHTML = await (await fetch(url)).text();
+        }
+    </script>
     <nav class="navbar fixed-bottom bg-body-tertiary">
         <div class="container-fluid">
             <h5>Clawffee</h5>
@@ -229,6 +243,9 @@
                             const index = pluginTabNames.indexOf(v => v.localeCompare(name) > 0);
                             pluginTabNames.splice(index, 0, name);
                             copiedButton.querySelector('#pluginname').textContent = name;
+                            copiedButton.querySelector('button').addEventListener('click', () => {
+                                loadPage('./plugin/page/' + name);
+                            })
                             if (data.hasIcon) copiedButton.querySelector('svg').innerHTML = '<use href="./plugin/icon/' + name + '.svg#main" />';
                             if (data.hasScript) {
                                 const scriptVal = (await (await fetch('./plugin/script/' + name)).text())

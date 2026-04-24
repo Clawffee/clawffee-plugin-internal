@@ -3,12 +3,12 @@ const { addListener } = require('./Subscribable.js');
 const { sharedServerData } = require('./SharedServerData.js');
 const { addHook } = require('../Overrides/ConsoleOverrides.js');
 const fs = require('fs');
-if(!fs.existsSync('./config/internal/server.json')) {
-    fs.writeFileSync('./config/internal/server.json', JSON.stringify({
-        port: 4444
-    }, null, 4))
-}
-const {port} = require('../../../../../config/internal/server.json');
+const { getConfig } = require('../Config/GetConfig.js');
+
+
+const config = getConfig('{port: number, printDebug: boolean}', "internal/server.json", {port: 4444, printDebug: false});
+const port = config.port;
+
 const firstConnection = Promise.withResolvers();
 const builtHTML = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/UI.html"], target: 'browser', splitting: false, compile: true}).then((value) => value.outputs[0], (err) => firstConnection.reject("Failed to build UI"));
 const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/Connect.js"], target: 'browser', splitting: false}).then((value) => value.outputs[0], (err) => firstConnection.reject("Failed to build Connect script:"));
@@ -145,7 +145,7 @@ const server = Bun.serve({
         },
         "/internal/dashboard/plugin/page/:plugin": async (req) => {
             if(!pluginPages[req.params.plugin]) return new Response("", {status: 404})
-            return new Response(pluginPages[req.params.plugin].page);
+            return new Response(pluginPages[req.params.plugin].page, {headers: { "content-type": "text/html;charset=utf-8" }});
         },
         "/internal/dashboard/plugin/script/:plugin": async (req) => {
             if(!pluginPages[req.params.plugin]?.script) return new Response("", {status: 404})

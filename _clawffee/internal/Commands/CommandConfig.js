@@ -42,40 +42,40 @@ defaultenv.parseType(`commandConfig & {
     childfolders: {[child: string]: folderConfig}
 }`, 'folderConfig');
 
-let config = sharedServerData.internal.commandConfig = /**@type {folderConfig} **/ (fs.existsSync(confPath)? JSON.parse(fs.readFileSync(confPath).toString()): null)
-if(!defaultenv.check("folderConfig")(config)) {
-    //@ts-ignore
-    config = sharedServerData.internal.commandConfig = {
-        "name": "commands",
-        "fullname": "commands",
-        "sortname": null,
-        "img": null,
-        "hidden": false,
-        "disabled": false,
-        "dependencies": [],
-        "locked": false,
-        "dependers": [],
-        "errored": false,
-        "childfolders": {
-            "examples": {
-                "name": "examples",
-                "fullname": "commands/examples",
-                "sortname": null,
-                "img": null,
-                "hidden": true,
-                "disabled": true,
-                "locked": true,
-                "errored": false,
-                "dependencies": [],
-                "dependers": [],
-                "parent": "commands",
-                "childfolders": {},
-                "childscripts": {}
-            }
-        },
-        "childscripts": {}
-    }
-}
+const { getConfig } = require('../Config/GetConfig.js');
+/**
+ * @type {folderConfig}
+ */
+const config = getConfig('folderConfig', "internal/commands.json", {
+    "name": "commands",
+    "fullname": "commands",
+    "sortname": null,
+    "img": null,
+    "hidden": false,
+    "disabled": false,
+    "dependencies": [],
+    "locked": false,
+    "dependers": [],
+    "errored": false,
+    "childfolders": {
+        "examples": {
+            "name": "examples",
+            "fullname": "commands/examples",
+            "sortname": null,
+            "img": null,
+            "hidden": true,
+            "disabled": true,
+            "locked": true,
+            "errored": false,
+            "dependencies": [],
+            "dependers": [],
+            "parent": "commands",
+            "childfolders": {},
+            "childscripts": {}
+        }
+    },
+    "childscripts": {}
+});
 clawffeeInternals.commandConfig = config;
 
 /**
@@ -85,6 +85,7 @@ clawffeeInternals.commandConfig = config;
  */
 function getCMDObject(path) {
     const folders = path.split(sep);
+    folders.shift();
     let mgr = config;
     let fname;
     while(folders.length > 1) {
