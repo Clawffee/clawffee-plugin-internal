@@ -220,6 +220,7 @@ addPluginTab(
     "plugins/internal/_clawffee/internal/Server/UI/ServerConfig.html", 
     "plugins/internal/_clawffee/internal/Server/UI/Server.svg"
 );
+sharedServerData.internal.serverConfig = config;
 functions['/internal/dashboard/plugin/save/Server/'] = (req) => {
     console.log(req);
     return "Success";

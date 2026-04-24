@@ -227,7 +227,7 @@ function stringify(value, space=4) {
     const set = new Set();
     return JSON.stringify(value, (key, value) => {
         if(set.has(value)) return '[RECURSIVE]';
-        set.add(value);
+        if(typeof value == 'object' && value) set.add(value);
         return value;
     }, space);
 }

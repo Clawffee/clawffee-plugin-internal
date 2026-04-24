@@ -15,7 +15,9 @@
     </div>
 </form>
 <script>
-    window.getFromClawffee([], (p, meow) => {
-        console.log(p, meow);
+    const doc = document.currentScript.parentElement;
+    window.getFromClawffee(["serverConfig"], (p, data) => {
+        doc.querySelector("#port").value = data.port;
+        doc.querySelector("#logDebugValues").value = data.printDebug;
     });
 </script>
