@@ -346,12 +346,14 @@ function prettyPrepareStack(err, stack) {
                 CallExpression: (node, state) => {
                     //@ts-expect-error
                     if(node.callee.property) {
+                        if(node.callee.type != 'Identifier') return;
                         notations.push({
                             //@ts-expect-error
                             s: node.callee.property.start, e: node.callee.property.end, v: "\u001b[96m"
                         });
                         return;
                     }
+                    if(node.callee.type == 'FunctionExpression') { return; }
                     notations.push({
                         s: node.callee.start, e: node.callee.end, v: "\u001b[96m"
                     });
