@@ -111,7 +111,8 @@
         /**
          * @param {string} url
          */
-        async function loadPage(url) {
+        async function loadPage(url, name) {
+            document.getElementById('pluginModalLabel').innerText = name + " Settings";
             pluginFrame.innerHTML = await (await fetch(url)).text();
         }
     </script>
@@ -244,7 +245,7 @@
                             pluginTabNames.splice(index, 0, name);
                             copiedButton.querySelector('#pluginname').textContent = name;
                             copiedButton.querySelector('button').addEventListener('click', () => {
-                                loadPage('./plugin/page/' + name);
+                                loadPage('./plugin/page/' + name, name);
                             })
                             if (data.hasIcon) copiedButton.querySelector('svg').innerHTML = '<use href="./plugin/icon/' + name + '.svg#main" />';
                             if (data.hasScript) {
