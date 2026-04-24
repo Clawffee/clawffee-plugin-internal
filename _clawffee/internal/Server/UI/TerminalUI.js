@@ -1,6 +1,6 @@
 //@ts-check
 
-import data from '../../../../../../config/internal/server.json';
+import config from '../../../../../../config/internal/server.json';
 /**
  * https://stackoverflow.com/a/22706073
  * @param {string} str
@@ -270,7 +270,7 @@ window.onload = () => {
     let v;
     while (v = consoleCache.shift()) addToConsole(v.name, v.line, v.cls, v.text);
     globalThis.listenToClawffee(["log"], (rpath, data) => {
-        if(rpath[0] == 'debug' && !data.printDebug) {
+        if(rpath[0] == 'debug' && !config.printDebug) {
             return;
         }
         const clsmap = {

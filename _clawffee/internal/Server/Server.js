@@ -3,9 +3,8 @@ const { addListener } = require('./Subscribable.js');
 const { sharedServerData } = require('./SharedServerData.js');
 const { addHook } = require('../Overrides/ConsoleOverrides.js');
 const fs = require('fs');
+
 const { getConfig } = require('../Config/GetConfig.js');
-
-
 const config = getConfig('{port: number, printDebug: boolean}', "internal/server.json", {port: 4444, printDebug: false});
 const port = config.port;
 
