@@ -1,7 +1,6 @@
 //@ts-check
 
 const { sep } = require('path');
-const fs = require('fs');
 const { simpleHookMgr } = require('../Hooks/HookHelper');
 const { sharedServerData } = require('../Server/SharedServerData');
 const { defaultenv } = require('tscheck');
@@ -140,9 +139,6 @@ function changeCommandConfig(path, update) {
         }
     }
     callHooks(path, cmd).filter(Boolean).forEach(console.error);
-    fs.writeFile(confPath, JSON.stringify(config), (err) => {
-        console.error("Could not save config");
-    });
 }
 
 module.exports = {
