@@ -1,5 +1,5 @@
 //@ts-check
-const { functionNames, functionFileNames, functionOverrides, fileInfo } = clawffeeInternals.commandGlobals;
+const { functionNames, functionFileNames, functionOverrides, functionDirectives, fileInfo } = clawffeeInternals.commandGlobals;
 
 const acorn = require("acorn");
 const acorn_walk = require("acorn-walk");
@@ -9,9 +9,10 @@ const prettyPrepareStack = require('../clawffeeInternals').prettyPrepareStack;
 // TODO add callback that callback in file got ran for GUI
 
 /**
+ * Load the syntax tree of a javascript module.
  * 
- * @param {string} codeStr 
- * @returns 
+ * @param {string} codeStr The source code of the javascript module as a string.
+ * @returns {import('acorn').Program} The `acorn` node.
  */
 function parseJS(codeStr) {
     return acorn.parse(codeStr, {
@@ -44,6 +45,28 @@ function addVariable(filename, prefix, codeStr) {
     allVariables.add(iterstr);
     return iterstr;
 }
+
+/**
+ * Get the top-level directive from function nodes like `FunctionDeclaration`, `FunctionExpression`, or `ArrowFunctionExpression`.
+ * @param {import('acorn').Function} node The function node.
+ * @returns {string | undefined} The top-level directive from the function node.
+ */
+function findDirective(node) {
+    if (node.body.type !== "BlockStatement") {
+        return;
+    }
+    if (node.body.body.length <= 0) {
+        return;
+    }
+    if (node.body.body[0].type !== "ExpressionStatement") {
+        return;
+    }
+    if (typeof node.body.body[0].directive !== "string") {
+        return;
+    }
+    return node.body.body[0].directive;
+}
+
 /**
  * 
  * @param {string} filename 
@@ -53,13 +76,9 @@ function addVariable(filename, prefix, codeStr) {
  */
 function applyOverrides(filename, codeStr, parsedCode) {
     const sourceMap = createSourceMap(codeStr);
+
     /**
-     * 
-     * @param {import("acorn").WhileStatement |
-     * import("acorn").DoWhileStatement |
-     * import("acorn").ForStatement |
-     * import("acorn").ForInStatement |
-     * import("acorn").ForOfStatement} node 
+     * @param {import("acorn").Node & { body: import("acorn").Statement }} node 
      */
     function whileWrapper(node) {
         const iterstr = addVariable(filename, "while_protection", codeStr);
@@ -68,83 +87,86 @@ function applyOverrides(filename, codeStr, parsedCode) {
         sourceMap.insert(`}`, node.body.end);
     }
 
+    /**
+     * @param {import('acorn').Function} node Any function.
+     */
+    function funtionWrapper(node) {
+        const funcstr = addVariable(filename, "function_name", codeStr);
+        const directive = findDirective(node);
+        const options = {
+            fakename: node?.id?.name,
+            directive,
+        };
+        const addFunctionStart = `globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},`;
+        const addFunctionEnd = `${node.body.type != 'BlockStatement' ? "}" : ""},${JSON.stringify(options)})`;
+        if(node.id) {
+            sourceMap.insert(`let ${node.id.name}=${addFunctionStart}`, node.start);
+            sourceMap.insert(`${funcstr}_`, node.id.start);
+        } else {
+            const argumentsStart = `${node.async ? "async " : ""}function ${funcstr}(`;
+            const argumentsEnd = `)${node.body.type != 'BlockStatement' ? "{return " : ""}`;
+            if(node.params.length > 0) {
+                sourceMap.replace(`${addFunctionStart}${argumentsStart}`, node.params[0].start - node.start, node.start);
+                sourceMap.replace(`${argumentsEnd}`, node.body.start - node.params[node.params.length-1].end - 1, node.params[node.params.length-1].end);
+            } else {
+                sourceMap.replace(`${addFunctionStart}${argumentsStart}${argumentsEnd}`, node.body.start - node.start - 1, node.start);
+            }
+        }
+        sourceMap.insert(`${addFunctionEnd}`, node.end);
+    }
+
+    /**
+     * @param {import('acorn').Property | import("acorn").AssignmentProperty} node 
+     */
+    function propertyWrapper(node) {
+        if(node.value.type != 'FunctionExpression') return;
+        if(node.method) {
+            sourceMap.insert(":", node.key.end);
+        }
+    }
+
     acorn_walk.simple(parsedCode, {
         WhileStatement: whileWrapper,
         DoWhileStatement: whileWrapper,
         ForStatement: whileWrapper,
         ForInStatement: whileWrapper,
         ForOfStatement: whileWrapper,
-        FunctionDeclaration: (node, state) => {
-            const funcstr = addVariable(filename, "function_name", codeStr);
-            if(node.id) {
-                sourceMap.insert(`let ${node.id.name} = globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},`, node.start);
-                sourceMap.insert(`${funcstr}_`, node.id.start);
-                sourceMap.insert(`,"${node.id.name}")`, node.end);
-            } else {
-                if(node.params.length > 0) {
-                    sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(`, node.params[0].start - node.start, node.start);
-                } else {
-                    sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}()`, node.body.start - node.start, node.start);
-                }
-                sourceMap.insert(`)`, node.end);
-            }
-        },
-        Property: (node, state) => {
-            if(node.value.type != 'FunctionExpression') return;
-            if(node.method) {
-                sourceMap.insert(":", node.key.end);
-            }
-        },
-        FunctionExpression: (node, state) => {
-            const funcstr = addVariable(filename, "function_name", codeStr);
-            if(node.params.length > 0) {
-                sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(`, node.params[0].start - node.start, node.start);
-                sourceMap.replace(`)`, node.body.start - node.params[node.params.length-1].end, node.params[node.params.length-1].end);
-            } else {
-                sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}()`, node.body.start - node.start, node.start);
-            }
-            sourceMap.insert(`)`, node.end);
-        },
-        ArrowFunctionExpression: (node, state) => {
-            const funcstr = addVariable(filename, "function_name", codeStr);
-            if(node.body.type == 'BlockStatement') {
-                if(node.params.length > 0) {
-                    sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(`, node.params[0].start - node.start, node.start);
-                    sourceMap.replace(`)`, node.body.start - node.params[node.params.length-1].end, node.params[node.params.length-1].end);
-                } else {
-                    sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}()`, node.body.start - node.start, node.start);
-                }
-                sourceMap.insert(`)`, node.end);
-            } else {
-                if(node.params.length > 0) {
-                    sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(`, node.params[0].start - node.start, node.start);
-                    sourceMap.replace(`){return `, node.body.start - node.params[node.params.length-1].end, node.params[node.params.length-1].end);
-                } else {
-                    sourceMap.replace(`globalThis.clawffeeInternals.addFunction(${JSON.stringify(filename)},${node.async?"async ":""}function ${funcstr}(){return `, node.body.start - node.start, node.start);
-                }
-                sourceMap.insert(`})`, node.end);
-            }
-        },
+        FunctionDeclaration: funtionWrapper,
+        Property: propertyWrapper,
+        FunctionExpression: funtionWrapper,
+        ArrowFunctionExpression: funtionWrapper,
     });
     return sourceMap.build();
 }
 
 /**
- * Add a function with overriden variables to use in the error log
+ * @typedef addFunctionOptions
+ * @prop {string} fakename? the name to use for function.name
+ * @prop {string} directive? the top-level directive of the function
+ */
+
+/**
+ * Add a function with overriden variables to use in the error log or to access function directives.
+ * 
  * @param {string} name fake file name to assign to the function
  * @param {Function} fn the function to have its data overriden
- * @param {string} fakename the name to use for function.name
+ * @param {addFunctionOptions} options? optional options
  */
-globalThis.clawffeeInternals.addFunction = (name, fn, fakename) => {
+globalThis.clawffeeInternals.addFunction = (name, fn, options) => {
     if(typeof fn == 'object') {
         fn = Object.values(fn)[0];
     }
     /**
      * @type {string}
      */
-    functionNames.set(fn.name, fakename);
+    if (options?.fakename != null) {
+        functionNames.set(fn.name, options.fakename);
+    }
+    if (options?.directive != null) {
+        functionDirectives.set(fn.name, options.directive);
+    }
     functionFileNames.set(fn.name, name);
-    fileInfo.get(name)?.functions.add(fn.name);
+    fileInfo.get(name)?.functions?.add(fn.name);
     return fn;
 }
 /**
@@ -242,5 +264,6 @@ module.exports = {
     functionNames,
     functionFileNames,
     functionOverrides,
+    functionDirectives,
     fileInfo
 };

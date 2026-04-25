@@ -9,8 +9,8 @@ const config = getConfig('{port: number, printDebug: boolean}', "internal/server
 const port = config.port;
 
 const firstConnection = Promise.withResolvers();
-const builtHTML = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/UI.html"], target: 'browser', splitting: false, compile: true}).then((value) => value.outputs[0], (err) => firstConnection.reject("Failed to build UI"));
-const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/Connect.js"], target: 'browser', splitting: false}).then((value) => value.outputs[0], (err) => firstConnection.reject("Failed to build Connect script:"));
+const builtHTML = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/UI.html"], target: 'browser', splitting: false, compile: true}).then((value) => value.outputs[0], (err) => firstConnection.reject(`Failed to build UI: ${String(err)}`));
+const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/Connect.js"], target: 'browser', splitting: false}).then((value) => value.outputs[0], (err) => firstConnection.reject(`Failed to build Connect script: ${String(err)}`));
 /**
  * @type {{[pluginName: string]: {page: Uint8Array<ArrayBuffer>, script: Uint8Array<ArrayBuffer> | undefined, icon: string?}}}
  */

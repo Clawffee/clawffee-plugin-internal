@@ -29,6 +29,12 @@ clawffeeInternals.commandGlobals = {
      */
     functionOverrides: new Map(),
     /**
+     * The top-level directive of a given function name.
+     *
+     * @type {Map<string, string>}
+     */
+    functionDirectives: new Map(),
+    /**
      * @type {Map<string, Set<string>>}
      */
     requiredFiles: new Map(),

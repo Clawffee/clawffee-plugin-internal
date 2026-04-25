@@ -70,5 +70,31 @@ module.exports = {
     },
     addFileCleanupFunc(filename, fn) {
         globalThis.clawffeeInternals.fileCleanupFuncs[filename]?.push(fn);
+    },
+    /**
+     * Get the top-level directive of a function loaded by clawffee's module system.
+     * This function will also return `null` if the given argument is not a function or not a function loaded by clawffee's module system.
+     * 
+     * For example:
+     * 
+     * ```
+     * const example1 = () => {
+     *     "strict";
+     *     return true;
+     * };
+     * const example2 = () => true;
+     * 
+     * assert(getDirective(example1)).toBe("strict");
+     * assert(getDirective(example2)).toBe(null);
+     * ```
+     *
+     * @param {function} fn The function to get the directive from.
+     * @returns {string | null} The top-level directive of the given function or `null` otherwise.
+     */
+    getDirective(fn) {
+        if (typeof fn !== "function") {
+            return null;
+        }
+        return globalThis.clawffeeInternals.commandGlobals.functionDirectives.get(fn.name) ?? null;
     }
 }
