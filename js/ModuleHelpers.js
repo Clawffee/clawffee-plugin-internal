@@ -6,6 +6,10 @@ const { fileManagers,  commandGlobals: {commandFolders}} = require('../clawffeeI
 const { wrapCode } = require('./JSParseManager');
 
 class CircularRequireError extends Error {
+    /**
+     * 
+     * @param {string} modulePath 
+     */
     constructor(modulePath) {
         super(`Circular require detected for module at path: ${modulePath}`);
         this.name = 'CircularRequireError';
@@ -13,40 +17,59 @@ class CircularRequireError extends Error {
 }
 
 class ModuleNotFoundError extends Error {
+    /**
+     * 
+     * @param {string} modulePath 
+     */
     constructor(modulePath) {
         super(`Module not found at path: ${modulePath}`);
         this.name = 'ModuleNotFoundError';
     }
 }
 
+/**
+ * 
+ * @param {string} dir 
+ * @param {string} parent 
+ * @returns 
+ */
 function isRelative(dir, parent) {
     const relative = path.relative(parent, dir);
-    return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+    return Boolean(relative && !relative.startsWith('..') && !path.isAbsolute(relative));
 }
 
+/**
+ * 
+ * @param {string} basePath 
+ * @param {NodeJS.Module} module 
+ * @returns 
+ */
 function createRequire(basePath, module) {
-    return function(modulePath) {
+    /**
+     * @param {string} modulePath
+     */
+    return function _require(modulePath) {
         let fullpath = "";
         try {
             fullpath = require.resolve(modulePath, {paths: [path.dirname(basePath)]});
         } catch(e) {
-            throw new ModuleNotFoundError(module);
+            throw new ModuleNotFoundError(module.path);
         }
         module.children.push(fullpath);
         let relative = commandFolders.reduce((prev, cur) => prev || isRelative(fullpath, cur), false);
         if(relative) {
             try {
-                if(require.cache[fullpath]) {
-                    if(!require.cache[fullpath].loaded) {
+                if(require.cache[fullpath] !== undefined) {
+                    if(!require.cache[fullpath]?.loaded) {
                         throw new CircularRequireError(fullpath);
                     }
-                    return require.cache[fullpath].exports;
+                    return require.cache[fullpath]?.exports;
                 }
                 let data = fs.readFileSync(fullpath).toString();
-                for (const ending in clawffeeInternals.fileManagers) {
-                    if (!Object.hasOwn(clawffeeInternals.fileManagers, ending) || !fullpath.endsWith(ending)) continue;
-                    const handler = clawffeeInternals.fileManagers[ending];
-                    return handler.onRequire?.(fullpath, data);
+                for (const ending in fileManagers) {
+                    if (!Object.hasOwn(fileManagers, ending) || !fullpath.endsWith(ending)) continue;
+                    const handler = fileManagers[ending];
+                    return handler.onRequire?.(fullpath, data, false); //TODO: create helper function
                 }
                 return data;
             } catch(e) {
@@ -54,10 +77,18 @@ function createRequire(basePath, module) {
             }
         }
         return require(fullpath);
-    }
+    } // TODO: fix this function ._.
 }
 
+/**
+ * 
+ * @param {string} path 
+ * @returns {NodeJS.Module}
+ */
 function createModule(path) {
+    /**
+     * @type {NodeJS.Module}
+     */
     const mod = {
         exports: {},
         path: path,
@@ -66,6 +97,8 @@ function createModule(path) {
         loaded: false,
         children: [],
         isPreloading: false,
+        //@ts-ignore
+        require: null
     }
     mod.require = createRequire(path, mod);
     return mod;
@@ -96,12 +129,13 @@ function runAsFile(fullpath, funcStr, keepCache) {
     return mod;
 }
 
+//@ts-ignore
 globalThis.clawffeeInternals.js = {
     defaultFile: [() => "console.log('Awoof!')\n"]
 }
 
 console.info("To start, create a .js file in the commands folder!");
-globalThis.clawffeeInternals.fileManagers['.js'] = {
+fileManagers['.js'] = {
     onLoad(fullpath, data, force) {
         if(!data.trim()) {
             data = globalThis.clawffeeInternals.js.defaultFile.map((v) => {try {return v(fullpath)} catch(e) {console.error(e); return '';}}).join('') + data;
@@ -114,7 +148,7 @@ globalThis.clawffeeInternals.fileManagers['.js'] = {
         runAsFile(fullpath, data, !force);
     },
     onRequire(fullpath, data) {
-        return runAsFile(fullpath, data).exports;
+        return runAsFile(fullpath, data, true)?.exports;
     }
 }
 

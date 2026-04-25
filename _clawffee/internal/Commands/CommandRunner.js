@@ -12,15 +12,15 @@ let workingDirectory = process.cwd();
 /**
  * @type {{[x: string]: Array<Function>}}
  */
-globalThis.clawffeeInternals.fileCleanupFuncs = {}
+const fileCleanupFuncs = {};
 /**
  * @type {{[x: string]: {
- * onLoad(path: string, str: string, initial: boolean, cmdObj: commandConfig): void, 
- * onUnload(path: string): void,
- * onRequire(path: string, str: string, initial: boolean, cmdObj: commandConfig): void,
+ * onLoad?(path: string, str: string, initial: boolean, cmdObj: commandConfig): void, 
+ * onUnload?(path: string): void,
+ * onRequire?(path: string, str: string, initial: boolean, cmdObj: commandConfig): void,
  * }}}
  */
-globalThis.clawffeeInternals.fileManagers = {};
+const fileManagers = {};
 
 
 /**
@@ -34,11 +34,11 @@ function unloadCommand(cmdObj) {
     }
     const path = cmdObj.fullname;
     const fullPath = join(workingDirectory, path);
-    if(!globalThis.clawffeeInternals.fileCleanupFuncs[fullPath]) return;
-    globalThis.clawffeeInternals.fileCleanupFuncs[fullPath].forEach((v) => {try {v()} catch(e) {console.error(e)}});
-    for (const ending in globalThis.clawffeeInternals.fileManagers) {
-        if (!Object.hasOwn(globalThis.clawffeeInternals.fileManagers, ending) || !path.endsWith(ending)) continue;
-        const mgr = globalThis.clawffeeInternals.fileManagers[ending];
+    if(!fileCleanupFuncs[fullPath]) return;
+    fileCleanupFuncs[fullPath].forEach((v) => {try {v()} catch(e) {console.error(e)}});
+    for (const ending in fileManagers) {
+        if (!Object.hasOwn(fileManagers, ending) || !path.endsWith(ending)) continue;
+        const mgr = fileManagers[ending];
         try {
             mgr.onUnload?.(path);
         } catch(e) {
@@ -62,9 +62,9 @@ function loadCommand(cmdObj, content, force=false) {
     const path = cmdObj.fullname;
     const fullPath = join(workingDirectory, path);
     try {
-        for (const ending in globalThis.clawffeeInternals.fileManagers) {
-            if (!Object.hasOwn(globalThis.clawffeeInternals.fileManagers, ending) || !path.endsWith(ending)) continue;
-            const mgr = globalThis.clawffeeInternals.fileManagers[ending];
+        for (const ending in fileManagers) {
+            if (!Object.hasOwn(fileManagers, ending) || !path.endsWith(ending)) continue;
+            const mgr = fileManagers[ending];
             const ret = (mgr.onLoad ?? mgr.onRequire)?.(fullPath, content, force, cmdObj);
             cmdObj.errored = false;
             callHooks(path, cmdObj, true).filter(Boolean).forEach(console.error);
@@ -82,5 +82,7 @@ const {create: onChange, call: callHooks} = /**@type {import('../Hooks/HookHelpe
 module.exports = {
     unloadCommand,
     loadCommand,
-    onChange
+    onChange,
+    fileCleanupFuncs,
+    fileManagers
 }

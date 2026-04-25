@@ -1,6 +1,6 @@
 //@ts-check
 const associatedObjects = {};
-
+const globals = require('#globals')
 
 /**
  * make an functions automatically unbind its outputs when it goes out of scope (and is GC'd)
@@ -9,8 +9,8 @@ const associatedObjects = {};
  * @returns {T}
  */
 function associateFunctionWithFile(fn) {
-    const fileName = globalThis.clawffeeInternals.getRunningScriptName();
-    globalThis.clawffeeInternals.fileCleanupFuncs[fileName]?.push(fn);
+    const fileName = globals.getRunningScriptName();
+    globals.fileCleanupFuncs[fileName]?.push(fn);
     return fn;
 }
 

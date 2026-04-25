@@ -10,13 +10,13 @@ Error.stackTraceLimit = 100;
  * 
  * @returns {NodeJS.CallSite[]}
  */
-globalThis.clawffeeInternals.getPrefixStack = () => {
+function getPrefixStack() {
     const oldPrepareStack = Error.prepareStackTrace;
     Error.prepareStackTrace = (err, stack) => {
         return stack;
     }
     const st = {};
-    Error.captureStackTrace(st, globalThis.clawffeeInternals.getPrefixStack);
+    Error.captureStackTrace(st, getPrefixStack);
     //@ts-ignore
     const stack = st.stack;
     Error.prepareStackTrace = oldPrepareStack;
@@ -30,7 +30,7 @@ let prefixStack = [];
  * 
  * @param {NodeJS.CallSite[]} stack 
  */
-globalThis.clawffeeInternals.setPrefixStack = (stack = []) => {
+function setPrefixStack(stack = []) {
     prefixStack = stack;
 }
 /**
@@ -115,7 +115,7 @@ util.getCallSites = () => {
  * @param {Function?} fn 
  * @returns 
  */
-globalThis.clawffeeInternals.getRunningScriptName = (fn=null) => {
+function getRunningScriptName (fn=null) {
     const oldPrepareStack = Error.prepareStackTrace;
     Error.prepareStackTrace = (err, stack) => {
         stack = stack.concat(prefixStack);
@@ -128,7 +128,7 @@ globalThis.clawffeeInternals.getRunningScriptName = (fn=null) => {
         return null;
     }
     const st = {};
-    Error.captureStackTrace(st, fn ?? globalThis.clawffeeInternals.getRunningScriptName);
+    Error.captureStackTrace(st, fn ?? getRunningScriptName);
     //@ts-ignore
     const stack = st.stack;
     Error.prepareStackTrace = oldPrepareStack;
@@ -422,8 +422,10 @@ function prettyPrepareStack(err, stack) {
     }
     return errStr;
 }
-globalThis.clawffeeInternals.prettyPrepareStack = prettyPrepareStack;
 
 module.exports = {
-    prettyPrepareStack
+    prettyPrepareStack,
+    getPrefixStack,
+    setPrefixStack,
+    getRunningScriptName
 };

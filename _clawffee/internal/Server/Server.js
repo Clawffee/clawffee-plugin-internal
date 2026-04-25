@@ -192,8 +192,6 @@ addListener(sharedServerData, "", (path, newValue, oldValue) => {
  * @type {{[x: string]: (req: Request, url: URL) => any | Promise<any>}}
  */
 const functions = {};
-clawffeeInternals.serverFunctions = functions;
-
 sharedServerData.internal.log = {};
 addHook(({type: name, cleaneddata, smallname}) => {
     sharedServerData.internal.log[name] = {smallname, cleaneddata};
@@ -244,5 +242,6 @@ module.exports = {
     config,
     addPluginTab,
     awaitConnection: firstConnection.promise,
-    openURL
+    openURL,
+    sharedServerData
 }

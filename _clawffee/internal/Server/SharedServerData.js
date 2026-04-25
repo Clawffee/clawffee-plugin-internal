@@ -1,10 +1,11 @@
 //@ts-check
 const { createServer } = require('./Subscribable.js');
+
 /**
  * @type {{[x: string]: any}}
  */
-clawffeeInternals.sharedServerData = createServer({internal: {}});
-
+const sharedServerData = createServer({internal: {}});
+globalThis.sharedServerData = sharedServerData;
 module.exports = {
-    sharedServerData: clawffeeInternals.sharedServerData
+    sharedServerData
 }

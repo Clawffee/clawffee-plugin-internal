@@ -45,6 +45,7 @@ const { basename } = require('path');
 const { commandFolders } = require('./CommandRunnerGlobals');
 const { unloadCommand, loadCommand, onChange } = require('./CommandRunner');
 const { getCMDObject, subToCommandChanges } = require('./CommandConfig');
+const globals = require('#globals');
 
 /**
  * Recursively loads and reloads commands in the given folder
@@ -101,7 +102,7 @@ function runCommands(folder) {
                 }
             }
         }
-        if(!Object.keys(clawffeeInternals.fileManagers).find(v => path.endsWith(v))) {
+        if(!Object.keys(globals.fileManagers).find(v => path.endsWith(v))) {
             return;
         }
         if(type == 'unlink') {

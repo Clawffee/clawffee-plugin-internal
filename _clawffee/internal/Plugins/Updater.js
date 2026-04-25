@@ -1,6 +1,7 @@
 //@ts-check
 const config = require('../../../version.json');
 
+const launcher = require('../Globals/launcher');
 /**
  * @typedef versionInfo
  * @prop {string} url url where to catch the update
@@ -33,7 +34,7 @@ function runUpdate(module, url, pubKey) {return new Promise((resolve, reject) =>
         console.log(`finished inflating update ${module} at ${folderPath}`);
         await new Promise(resolve => setTimeout(resolve, 500));
         //@ts-ignore
-        if(!globalThis.clawffeeInternals.launcher.verifyHash(folderPath, pubKey)) return reject('Hash of downloaded folder is incorrect!!!');
+        if(!launcher.verifyHash(folderPath, pubKey)) return reject('Hash of downloaded folder is incorrect!!!');
         try {
             fs.rmSync(`plugins/${module}.bak`, {force: true, recursive: true});
         } catch(e) {} // can silently fail
@@ -98,10 +99,10 @@ function runUpdate(module, url, pubKey) {return new Promise((resolve, reject) =>
 });}
 
 //@ts-ignore
-globalThis.clawffeeInternals.launcher.update_info.catch((err) => {
+launcher.updateInfo.catch(() => {
     console.warn('couldnt check for updates');
 });
-globalThis.clawffeeInternals.launcher.update_info.then((info) => {
+launcher.updateInfo.then((info) => {
     if(typeof info == 'string') {
         return console.warn(info);
     }
@@ -115,10 +116,9 @@ globalThis.clawffeeInternals.launcher.update_info.then((info) => {
     require('../Server/Server').functions['/update/internal'] = async () => {
         try {
             //@ts-ignore
-            const ret = await globalThis.clawffeeInternals.launcher.runUpdate();
+            const ret = await launcher.runUpdate();
             if(ret) return console.error(ret);
-            console.log('Please relaunch clawffee...');
-            prompt();
+            prompt('Please relaunch clawffee...');
             process.exit(0);
         } catch(e) {
             console.log(e);

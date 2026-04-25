@@ -2,9 +2,8 @@
 
 const { sep } = require('path');
 const { simpleHookMgr } = require('../Hooks/HookHelper');
-const { sharedServerData } = require('../Server/SharedServerData');
 const { defaultenv } = require('tscheck');
-const confPath = 'config/internal/commands.json';
+const confPath = 'internal/commands.json';
 
 /**
  * @typedef commandConfig
@@ -45,7 +44,7 @@ const { getConfig } = require('../Config/GetConfig.js');
 /**
  * @type {folderConfig}
  */
-const config = getConfig('folderConfig', "internal/commands.json", {
+const config = getConfig('folderConfig', confPath, {
     "name": "commands",
     "fullname": "commands",
     "sortname": null,
@@ -75,7 +74,6 @@ const config = getConfig('folderConfig', "internal/commands.json", {
     },
     "childscripts": {}
 });
-clawffeeInternals.commandConfig = config;
 
 /**
  * 
@@ -144,5 +142,6 @@ function changeCommandConfig(path, update) {
 module.exports = {
     getCMDObject,
     changeCommandConfig,
-    subToCommandChanges
+    subToCommandChanges,
+    config
 }

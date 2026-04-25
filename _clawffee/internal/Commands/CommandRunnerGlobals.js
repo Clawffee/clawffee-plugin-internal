@@ -4,7 +4,7 @@
  * @prop {Set<string>} variables
  * @prop {Set<string>} functions
  */
-clawffeeInternals.commandGlobals = {
+module.exports = {
     /**
      * @type {Map<string, fileInfo>}
      */
@@ -43,4 +43,3 @@ clawffeeInternals.commandGlobals = {
      */
     commandFolders: []
 }
-module.exports = clawffeeInternals.commandGlobals;

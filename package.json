@@ -6,5 +6,8 @@
     "tar-stream": "^3.1.8",
     "tscheck": "https://github.com/PurredCoffee/tscheck.git",
     "webview-bun": "^2.4.0"
+  },
+  "imports": {
+    "#globals": "./_clawffee/internal/Globals/ownGlobals.js"
   }
 }

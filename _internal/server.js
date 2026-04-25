@@ -1,6 +1,6 @@
 //@ts-check
 const { associateFunctionWithFile } = require("./codeBinder");
-
+const globals = require('#globals')
 
 /**
  * @callback URLCallback
@@ -17,13 +17,14 @@ const { associateFunctionWithFile } = require("./codeBinder");
  * @returns 
  */
 function setFunction(path, callback) {
-    globalThis.clawffeeInternals.serverFunctions[path] = callback;
+    globals.serverFunctions[path] = callback;
     return associateFunctionWithFile(() => {
-        if (callback == globalThis.clawffeeInternals.serverFunctions[path])
-            delete globalThis.clawffeeInternals.serverFunctions[path];
+        if (callback == globals.serverFunctions[path])
+            delete globals.serverFunctions[path];
     });
 }
 
 module.exports = {
-    sharedServerData: clawffeeInternals.sharedServerData, setFunction
+    sharedServerData: globals.sharedServerData,
+    setFunction
 }

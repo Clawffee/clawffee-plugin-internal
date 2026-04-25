@@ -1,5 +1,6 @@
 //@ts-check
-const { functionNames, functionFileNames, functionOverrides, functionDirectives, fileInfo } = clawffeeInternals.commandGlobals;
+const { functionNames, functionFileNames, functionOverrides, functionDirectives, fileInfo } = require('#globals').commandGlobals;
+const verbose = require('#globals')
 
 const acorn = require("acorn");
 const acorn_walk = require("acorn-walk");
@@ -152,6 +153,7 @@ function applyOverrides(filename, codeStr, parsedCode) {
  * @param {Function} fn the function to have its data overriden
  * @param {addFunctionOptions} options? optional options
  */
+//@ts-ignore
 globalThis.clawffeeInternals.addFunction = (name, fn, options) => {
     if(typeof fn == 'object') {
         fn = Object.values(fn)[0];
@@ -204,7 +206,7 @@ function wrapCode(filename, codeStr) {
             }
         });
         const compiledCode = applyOverrides(filename, codeStr, parsedCode);
-        if(clawffeeInternals.verbose) {
+        if(globalThis.clawffeeInternals.verbose) {
             console.log(compiledCode.str);
         }
         const rootfuncstr = addVariable(filename, "function_name", codeStr);

@@ -1,7 +1,7 @@
-
+const globals = require('#globals');
 module.exports = {
     unsafe: {
-        commandConfig: globalThis.clawffeeInternals.commandConfig,
+        commandConfig: globals.commandConfig,
         /**
          * @type {{
          *  fileInfo: Map<string, fileInfo>,
@@ -12,10 +12,10 @@ module.exports = {
          *  commandFolders: string[]
          * }}
          */
-        commandGlobals: globalThis.clawffeeInternals.commandGlobals,
-        fileManagers: globalThis.clawffeeInternals.fileManagers,
+        commandGlobals: globals.commandGlobals,
+        fileManagers: globals.fileManagers,
     },
-    commandConfig: globalThis.clawffeeInternals.commandConfig,
+    commandConfig: globals.commandConfig,
     /**
      * @type {{
      *  fileInfo: Map<string, fileInfo>,
@@ -26,18 +26,18 @@ module.exports = {
      *  commandFolders: string[]
      * }}
      */
-    commandGlobals: globalThis.clawffeeInternals.commandGlobals,
+    commandGlobals: globals.commandGlobals,
     /**
      * 
      * @param {Error} error the error to use as the base of the stack trace
      * @param {any} stack the stack trace to apply on the error to use as the stack trace
      */
     prettyPrepareStack(error, stack) {
-        return clawffeeInternals.prettyPrepareStack(error, stack);
+        return globals.prettyPrepareStack(error, stack);
     },
-    fileManagers: globalThis.clawffeeInternals.fileManagers,
+    fileManagers: globals.fileManagers,
     addFileManager(extension, onRequire, onLoad, onUnload) {
-        globalThis.clawffeeInternals.fileManagers[extension] = {
+        globals.fileManagers[extension] = {
             onRequire,
             onLoad, 
             onUnload
@@ -45,31 +45,31 @@ module.exports = {
     },
     //TODO: comment all this again
     getPrefixStack() {
-        return globalThis.clawffeeInternals.getPrefixStack();
+        return globals.getPrefixStack();
     },
     setPrefixStack(stack) {
-        globalThis.clawffeeInternals.setPrefixStack(stack);
+        globals.setPrefixStack(stack);
     },
     getRunningScriptName() {
-        return globalThis.clawffeeInternals.getRunningScriptName();
+        return globals.getRunningScriptName();
     },
     appendDefaultFile(fn) {
         if(typeof fn === 'function') {
-            globalThis.clawffeeInternals.js.defaultFile
-            globalThis.clawffeeInternals.js.defaultFile.push(fn);
+            globals.js.defaultFile
+            globals.js.defaultFile.push(fn);
         } else {
-            globalThis.clawffeeInternals.js.defaultFile.push(() => fn);
+            globals.js.defaultFile.push(() => fn);
         }
     },
     prefixDefaultFile(fn) {
         if(typeof fn === 'function') {
-            globalThis.clawffeeInternals.js.defaultFile.unshift(fn);
+            globals.js.defaultFile.unshift(fn);
         } else {
-            globalThis.clawffeeInternals.js.defaultFile.unshift(() => fn);
+            globals.js.defaultFile.unshift(() => fn);
         }
     },
     addFileCleanupFunc(filename, fn) {
-        globalThis.clawffeeInternals.fileCleanupFuncs[filename]?.push(fn);
+        globals.fileCleanupFuncs[filename]?.push(fn);
     },
     /**
      * Get the top-level directive of a function loaded by clawffee's module system.
@@ -95,6 +95,6 @@ module.exports = {
         if (typeof fn !== "function") {
             return null;
         }
-        return globalThis.clawffeeInternals.commandGlobals.functionDirectives.get(fn.name) ?? null;
+        return globals.commandGlobals.functionDirectives.get(fn.name) ?? null;
     }
 }

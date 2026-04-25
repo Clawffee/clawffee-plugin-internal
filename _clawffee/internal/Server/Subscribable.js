@@ -462,12 +462,6 @@ function apply(server, value, path) {
     callAllAffected(server, null, originalValue);
 }
 
-globalThis.clawffeeInternals.subscribables = {
-    createServer,
-    addListener,
-    apply
-}
-
 module.exports = {
     createServer,
     addListener,
