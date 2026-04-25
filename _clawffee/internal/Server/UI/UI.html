@@ -74,22 +74,12 @@
 </head>
 
 <body>
-    <div id="overlay"
-        style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: black; z-index: 10000000; transition: top 0.5s ease-in-out;">
-    </div>
     <script>
         const darkModeMql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
 
         if (darkModeMql && darkModeMql.matches) {
             document.body.setAttribute('data-bs-theme', 'dark');
         }
-
-        window.addEventListener('load', () => {
-            document.getElementById('overlay').style.top = "100vh";
-            setTimeout(() => {
-                document.getElementById('overlay').remove();
-            }, 500);
-        });
     </script>
     <div class="modal fade" id="pluginModal" tabindex="-1" aria-labelledby="pluginModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">

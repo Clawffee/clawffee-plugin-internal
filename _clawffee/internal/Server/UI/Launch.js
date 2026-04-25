@@ -15,27 +15,64 @@ self.addEventListener('message', event => {
                 });
                 w.title = "Clawffee";
                 const page = `http://localhost:${port}/internal/dashboard/`;
+                const color = process.platform == "win32"?'white':'black'
+                const funcstr = `
+if(location.href == "about:blank") location.href = "${page}"
+else if(location.protocol+'//'+location.host+location.pathname != "${page}") {
+    openWebpage(location.href);
+    history.back();
+};
+const overlaynode = document.createElement('div');
+overlaynode.style = "position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: ${color}; z-index: 10000000; transition: top 0.5s ease-in-out;"
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.body.appendChild(overlaynode);
+});
+
+window.addEventListener('load', () => {
+    overlaynode.style.top = "100vh";
+    setTimeout(() => {
+        overlaynode.remove();
+    }, 500);
+    function setupLink(v) {
+        const ref = v.href;
+        v.href = "#";
+        v.addEventListener('click', () => {
+            openWebpage(ref);
+        });
+    }
+    document.querySelectorAll('a').forEach(setupLink);
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    node.querySelectorAll('a').forEach(setupLink);
+                }
+            });
+        });
+    }).observe(document.body, { childList: true, subtree: true });
+});`;
+                w.bind("openWebpage", (page) => {
+                    self.postMessage({t: 'open', v: page});
+                    return {};
+                });
+                w.bind("debug", (...data) => {
+                    console.log(...data)
+                    return {};
+                });
+                w.init(funcstr);
                 w.setHTML(`<!DOCTYPE html>
-<html lang="en" style="background-color: black;">
-<body style="background-color: black;">
+<html lang="en">
+<body style="background-color: ${color};">
 <script>
 window.onload = () => {
+    setTimeout(() => {
     window.location.href = "${page}";
+}, 5000)
 }
 </script>
 </body>
 </html>`);
-                const funcstr = `
-                    if(location.href == "about:blank") location.href = "${page}"
-                    else if(location.protocol+'//'+location.host+location.pathname != "${page}") {
-                        openWebpage(location.href);
-                        history.back();
-                    };
-                `;
-                w.bind("openWebpage", (page) => {
-                    self.postMessage({t: 'open', v: page});
-                });
-                w.init(funcstr);
                 w.run();
                 self.postMessage({t: 'exit'});
             })
