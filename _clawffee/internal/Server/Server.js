@@ -241,9 +241,7 @@ functions['/internal/dashboard/plugin/save/Server/'] = async (req) => {
 
 module.exports = {
     functions,
-    config: {
-        port: 4444
-    },
+    config,
     addPluginTab,
     awaitConnection: firstConnection.promise,
     openURL
