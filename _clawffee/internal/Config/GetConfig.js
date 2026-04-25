@@ -40,6 +40,7 @@ function getConfig(template, path, _default, errCallback=(err) => console.error(
     let timeout;
     //@ts-ignore
     addListener(x, [], () => {
+        defaultenv.throw(template)(x);
         clearTimeout(timeout);
         timeout = setTimeout(() => {
             fs.writeFile(path, JSON.stringify(x, null, 4), (err) => {

@@ -5,7 +5,9 @@ const { addHook } = require('../Overrides/ConsoleOverrides.js');
 const fs = require('fs');
 
 const { getConfig } = require('../Config/GetConfig.js');
-const config = getConfig('{port: number, printDebug: boolean}', "internal/server.json", {port: 4444, printDebug: false});
+const { defaultenv } = require('tscheck');
+const configType = '{port: number, printDebug: boolean}';
+const config = getConfig(configType, "internal/server.json", {port: 4444, printDebug: false});
 const port = config.port;
 
 const firstConnection = Promise.withResolvers();
@@ -20,7 +22,7 @@ sharedServerData.internal.pluginPages = {};
 /**
  * 
  * @param {string} pluginName 
- * @param {string} UIPath 
+ * @param {string | import('./UI/settingsGen.js').Template} UIPath 
  * @param {string?} iconPath
  * @param {string?} scriptPath
  */
@@ -226,9 +228,15 @@ addPluginTab(
     "plugins/internal/_clawffee/internal/Server/UI/Server.svg"
 );
 sharedServerData.internal.serverConfig = config;
-functions['/internal/dashboard/plugin/save/Server/'] = (req) => {
-    console.log(req);
-    return "Success";
+functions['/internal/dashboard/plugin/save/Server/'] = async (req) => {
+    const changes = await req.json();
+    Object.entries(changes).forEach(([key, value]) => {
+        config[key] = value;
+    }); // TODO: Object.assign does not work with Subscribables
+    if(!confirm('Clawffee will close to apply the changes.')) return;
+    setTimeout(() => {
+        process.exit();
+    }, 2000);
 }
 
 module.exports = {

@@ -34,18 +34,19 @@
         port.value = data.port;
         port.placeholder = data.port;
         port.onchange = () => {
-            changes.port = port.value;
+            changes.port = parseInt(port.value);
             saveButton.ariaDisabled = false;
             saveButton.classList.remove('disabled');
         }
-        printDebug.value = data.printDebug;
+        printDebug.checked = data.printDebug;
         printDebug.onchange = () => {
-            changes.printDebug = printDebug.value;
+            changes.printDebug = printDebug.checked;
             saveButton.ariaDisabled = false;
             saveButton.classList.remove('disabled');
         }
         saveButton.onclick = () => {
-            fetch('')
+            if(saveButton.disabled) return;
+            fetch(`/internal/dashboard/plugin/save/Server/`, {body:JSON.stringify(changes), method: 'POST'});
         }
         saveButton.onkeyup = (ev) => {
             if(ev.key == '\n') {
