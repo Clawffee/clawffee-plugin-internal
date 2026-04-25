@@ -16,14 +16,13 @@ self.addEventListener('message', event => {
                 w.title = "Clawffee";
                 const page = `http://localhost:${port}/internal/dashboard/`;
                 w.setHTML(`<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+<html lang="en" style="background-color: black;">
 <body style="background-color: black;">
-    
+<script>
+window.onload = () => {
+    window.location.href = "${page}";
+}
+</script>
 </body>
 </html>`);
                 const funcstr = `
