@@ -1,6 +1,5 @@
 //@ts-check
 
-const verbose = globalThis.clawffeeInternals.verbose ?? false;
 const x = {
     get commandConfig() {return require('../Commands/CommandConfig').config},
     get fileManagers() {return require('../Commands/CommandRunner').fileManagers},
