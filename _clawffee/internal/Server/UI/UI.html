@@ -81,6 +81,55 @@
             document.body.setAttribute('data-bs-theme', 'dark');
         }
     </script>
+    <div class="modal fade" id="dependencyModal" tabindex="-1" aria-labelledby="pluginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">The following plugins need to be installed:</h1>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>V</th>
+                                <th>URL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dependencyTable">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" id="submitButton" onclick="fetch('/internal/updater/installMissingDeps/')">Install</button>
+                </div>
+            </div>
+        </div>
+        <script>
+            window.addEventListener('load', () => {
+                globalThis.getFromClawffee(["updateInfo", "missingDeps"], (p, data) => {
+                    document.getElementById('dependencyTable').innerHTML = "";
+                    if(!data) return;
+                    (new bootstrap.Modal('#dependencyModal')).show();
+                    data.forEach((v) => {
+                        const row = document.createElement('tr');
+                        const name = document.createElement('td');
+                        name.innerText = v.folder;
+                        const version = document.createElement('td');
+                        version.innerText = v.dep.version ?? "";
+                        const url = document.createElement('td');
+                        url.appendChild(document.createElement('a'));
+                        url.firstElementChild.innerText = v.dep.url;
+
+                        row.appendChild(name);
+                        row.appendChild(version);
+                        row.appendChild(url);
+                        document.getElementById('dependencyTable').appendChild(row);
+                    });
+                });
+            });
+        </script>
+    </div>
     <div class="modal fade" id="pluginModal" tabindex="-1" aria-labelledby="pluginModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">

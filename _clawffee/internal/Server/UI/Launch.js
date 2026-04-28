@@ -31,9 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('keydown', (ev) => {
     if(ev.key.startsWith('F') && ev.key.length > 1) {
-        toggleTerminal();
+        if(ev.key == 'F12')
+            toggleTerminal();
+        ev.preventDefault();
     }
-    ev.preventDefault();
 });
 
 window.addEventListener('load', () => {

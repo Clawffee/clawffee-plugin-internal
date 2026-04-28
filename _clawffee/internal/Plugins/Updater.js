@@ -153,8 +153,7 @@ async function initUpdate(path, data) {
         try {
             const ret = await runUpdate(path, updateFile.url, data.pub_key);
             if(ret) return console.error(ret);
-            console.log('Please relaunch clawffee...');
-            prompt();
+            prompt('Please relaunch clawffee...');
             process.exit(0);
         } catch(e) {
             console.log(e);
@@ -166,6 +165,7 @@ const fs = require('fs');
 const path = require('path');
 const { sharedServerData } = require('../Server/SharedServerData');
 const internal = require('../../../internal');
+const { functions } = require('../Server/Server');
 
 function verifyModules() {
     const { promise, resolve, reject } = Promise.withResolvers();
@@ -209,34 +209,38 @@ function verifyModules() {
     if(missingDeps.length == 0) {
         return Promise.resolve(true);
     }
+    sharedServerData.internal.updateInfo.missingDeps = missingDeps;
     console.log("\n\nThe following plugins need to be installed:\n\n");
     missingDeps.forEach(dep => console.log("\u001b[33m" + dep.folder + "\u001b[0m available at \u001b[32;1;4m" + dep.dep.url + "\u001b[0m"))
-    prompt("\n\nPlease confirm...\n\n");
-    missingDeps.forEach(async (dep) => {
-        const res = await fetch(dep.dep.url, {
-            redirect: 'follow'
+    console.log("\n");
+    functions['/internal/updater/installMissingDeps/'] = () => {
+        missingDeps.forEach(async (dep) => {
+            const res = await fetch(dep.dep.url, {
+                redirect: 'follow'
+            });
+            if(res.status != 200) return console.warn('failed to check for updates for', path);
+            const update_info = await res.json();
+            //@ts-ignore
+            const updateFile = update_info.assets.find(v => v.name === dep.dep.update_file);
+            const ret = await runUpdate(dep.folder, 
+                updateFile.url,
+                dep.dep.pub_key
+            );
+            if(ret) return console.error(ret);
+            let i = missingDeps.indexOf(dep);
+            //@ts-ignore
+            if(i != missingDeps.length-1) missingDeps[i] = missingDeps.pop();
+            else missingDeps.pop();
+            if(missingDeps.length == 0) resolve(false);
         });
-        if(res.status != 200) return console.warn('failed to check for updates for', path);
-        const update_info = await res.json();
-        //@ts-ignore
-        const updateFile = update_info.assets.find(v => v.name === dep.dep.update_file);
-        const ret = await runUpdate(dep.folder, 
-            updateFile.url,
-            dep.dep.pub_key
-        );
-        if(ret) return console.error(ret);
-        let i = missingDeps.indexOf(dep);
-        //@ts-ignore
-        if(i != missingDeps.length-1) missingDeps[i] = missingDeps.pop();
-        else missingDeps.pop();
-        if(missingDeps.length == 0) resolve(false);
-    });
+    }
     return promise;
 }
 
 sharedServerData.internal.updateInfo = {
     version: config.version,
-    availableUpdates: null
+    availableUpdates: null,
+    missingDeps: null
 };
 
 console.log(`\u001b[0m\n Clawffee Version \u001b[33;1m${config.version}\u001b[0m 🐾`);
