@@ -6,8 +6,9 @@ const fs = require('fs');
 
 const { getConfig } = require('../Config/GetConfig.js');
 const { defaultenv } = require('tscheck');
-const configType = '{port: number, printDebug: boolean}';
-const config = getConfig(configType, "internal/server.json", {port: 4444, printDebug: false});
+const { hideTerminal, showTerminal, toggleTerminal } = require('../Overrides/HideTerminal.js');
+const configType = '{port: number, printDebug: boolean, showTerminal: boolean?}';
+const config = getConfig(configType, "internal/server.json", {port: 4444, printDebug: false, showTerminal: false});
 const port = config.port;
 
 const firstConnection = Promise.withResolvers();
@@ -18,6 +19,8 @@ const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/intern
  */
 const pluginPages = {};
 sharedServerData.internal.pluginPages = {};
+
+if(!config.showTerminal) hideTerminal();
 
 /**
  * 
@@ -209,6 +212,7 @@ worker.addEventListener('message', (m) => {
         case 'exit': 
             process.exit();
         case 'open': return openURL(m.data?.v);
+        case 'terminal': return toggleTerminal();
     }
 });
 
@@ -234,9 +238,8 @@ functions['/internal/dashboard/plugin/save/Server/'] = async (req) => {
     if(!confirm('Clawffee will close to apply the changes.')) return;
     setTimeout(() => {
         process.exit();
-    }, 2000);
+    }, 500);
 }
-
 module.exports = {
     functions,
     config,

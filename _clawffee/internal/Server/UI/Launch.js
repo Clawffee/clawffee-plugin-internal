@@ -29,6 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(overlaynode);
 });
 
+document.addEventListener('keydown', (ev) => {
+    if(ev.key.startsWith('F') && ev.key.length > 1) {
+        toggleTerminal();
+    }
+    ev.preventDefault();
+});
+
 window.addEventListener('load', () => {
     overlaynode.style.top = "100vh";
     setTimeout(() => {
@@ -60,6 +67,10 @@ window.addEventListener('load', () => {
                     console.log(...data)
                     return {};
                 });
+                w.bind("toggleTerminal", (...data) => {
+                    self.postMessage({t: 'terminal'});
+                    return {};
+                })
                 w.init(funcstr);
                 w.setHTML(`<!DOCTYPE html>
 <html lang="en">

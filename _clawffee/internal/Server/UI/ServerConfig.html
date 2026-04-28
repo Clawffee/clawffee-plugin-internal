@@ -10,6 +10,12 @@
             <label class="form-check-label" for="logDebugValues">Log Debug Values</label>
         </div>
     </div>
+    <div class="mb-3">
+        <div class="form-check form-switch">
+            <input class="form-check-input" id="showTerminal" type="checkbox" name="showTerminal" />
+            <label class="form-check-label" for="showTerminal">Show Terminal App (Windows only)</label>
+        </div>
+    </div>
     <div class="d-flex flex-end">
         <button class="btn btn-primary disabled" id="submitButton">Save</button>
     </div>
@@ -26,6 +32,10 @@
      */
     const printDebug = doc.querySelector("#logDebugValues");
     /**
+     * @type {HTMLInputElement}
+     */
+    const showTerminal = doc.querySelector("#showTerminal");
+    /**
      * @type {HTMLButtonElement}
      */
     const saveButton = doc.querySelector('#submitButton');
@@ -41,6 +51,12 @@
         printDebug.checked = data.printDebug;
         printDebug.onchange = () => {
             changes.printDebug = printDebug.checked;
+            saveButton.ariaDisabled = false;
+            saveButton.classList.remove('disabled');
+        }
+        showTerminal.checked = data.showTerminal;
+        showTerminal.onchange = () => {
+            changes.showTerminal = showTerminal.checked;
             saveButton.ariaDisabled = false;
             saveButton.classList.remove('disabled');
         }

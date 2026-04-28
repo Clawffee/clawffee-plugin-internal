@@ -1,6 +1,7 @@
 {
     "url": "https://api.github.com/repos/Clawffee/clawffee-plugin-internal/releases/latest",
     "version": "0.9.0",
+    "clawffee_version": "0.9.0",
     "dependencies": {
         "builtin": {
             "url": "https://api.github.com/repos/Clawffee/clawffee-plugin-builtin/releases/latest",
