@@ -1,6 +1,7 @@
 //@ts-check
 const { associateFunctionWithFile } = require("./codeBinder");
-const globals = require('#globals')
+const globals = require('#globals');
+const { openURL } = require("../_clawffee/internal/Server/Server");
 
 /**
  * @callback URLCallback
@@ -26,5 +27,6 @@ function setFunction(path, callback) {
 
 module.exports = {
     sharedServerData: globals.sharedServerData,
-    setFunction
+    setFunction,
+    openURL
 }
