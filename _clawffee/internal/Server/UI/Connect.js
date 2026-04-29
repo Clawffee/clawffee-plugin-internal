@@ -50,7 +50,7 @@ let firstConnect = true;
  */
 function reconnect(timeout=0) {
     if(ws) ws.close();
-    let nextTimeout = (timeout == 0)? 5000 : timeout * 3;
+    let nextTimeout = (timeout == 0)? 125 : timeout * 2;
     let msg = setTimeout(() => console.log("Connecting to Clawffee..."), 200);
     let firstMsg = true
     ws = new WebSocket(`ws://${url}`);
