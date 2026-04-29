@@ -214,11 +214,13 @@ function verifyModules() {
     missingDeps.forEach(dep => console.log("\u001b[33m" + dep.folder + "\u001b[0m available at \u001b[32;1;4m" + dep.dep.url + "\u001b[0m"))
     console.log("\n");
     functions['/internal/updater/installMissingDeps/'] = () => {
+        delete functions['/internal/updater/installMissingDeps/'];
+        sharedServerData.internal.updateInfo.state = 'installing...';
         missingDeps.forEach(async (dep) => {
             const res = await fetch(dep.dep.url, {
                 redirect: 'follow'
             });
-            if(res.status != 200) return console.warn('failed to check for updates for', path);
+            if(res.status != 200) return reject(console.warn('failed to fetch for updates for', path));
             const update_info = await res.json();
             //@ts-ignore
             const updateFile = update_info.assets.find(v => v.name === dep.dep.update_file);
@@ -240,7 +242,9 @@ function verifyModules() {
 sharedServerData.internal.updateInfo = {
     version: config.version,
     availableUpdates: null,
-    missingDeps: null
+    missingDeps: null,
+    state: 'launching...',
+    error: null
 };
 
 console.log(`\u001b[0m\n Clawffee Version \u001b[33;1m${config.version}\u001b[0m 🐾`);
