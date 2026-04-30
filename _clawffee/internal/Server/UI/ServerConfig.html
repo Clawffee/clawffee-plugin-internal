@@ -40,7 +40,7 @@
      */
     const saveButton = doc.querySelector('#submitButton');
     let changes = {};
-    window.getFromClawffee(["serverConfig"], (p, data) => {
+    const x = window.getFromClawffee(["serverConfig"], (p, data) => {
         port.value = data.port;
         port.placeholder = data.port;
         port.onchange = () => {
@@ -70,5 +70,11 @@
             }
         }
     });
+    new MutationObserver(function() {
+        if(!document.body.contains(doc)) {
+            x.off();
+            this.disconnect();
+        }
+    }).observe(doc.parentElement, {childList: true});
 }
 </script>

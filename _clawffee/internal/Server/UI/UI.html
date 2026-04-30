@@ -426,6 +426,28 @@
             </template>
         </div>
     </article>
+    <script>
+        function addScript(s) {
+            const script = document.createElement('script');
+            script.innerHTML = s;
+            document.body.appendChild(script);
+        }
+        window.addEventListener('load', () => {
+            globalThis.getFromClawffee(["pluginPageScripts"], (p, data) => {
+                try {
+                    if(p.length > 0) {
+                        addScript(data);
+                    } else {
+                        Object.values(data).forEach((v) => {
+                            addScript(v);
+                        })
+                    }
+                } catch(e) {
+                    console.error(e.message);
+                }
+            });
+        });
+    </script>
     <script src="./bootstrap/bootstrap.esm.min.js"></script>
 </body>
 

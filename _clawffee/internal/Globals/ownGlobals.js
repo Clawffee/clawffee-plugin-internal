@@ -12,6 +12,8 @@ const x = {
     get serverFunctions() {return require('../Server/Server').functions},
     get sharedServerData() {return require('../Server/SharedServerData').sharedServerData},
     get subscribables() {return require('../Server/Subscribable')},
+    get addPluginScript() {return require('../Server/Server').addPluginScript},
+    get addPluginTab() {return require('../Server/Server').addPluginTab},
     get launcher() {return require('./launcher')},
     verbose: false,
 }

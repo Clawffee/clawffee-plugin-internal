@@ -15,7 +15,7 @@ self.addEventListener('message', event => {
                 });
                 w.title = "Clawffee";
                 const page = `http://localhost:${port}/internal/dashboard/`;
-                const color = process.platform == "win32"?'white':'black'
+                const color = process.platform == "win32"?'white':'black';
                 const funcstr = `
 if(location.href == "about:blank") location.href = "${page}"
 else if(location.protocol+'//'+location.host+location.pathname != "${page}") {
@@ -68,7 +68,7 @@ window.addEventListener('load', () => {
                     console.log(...data)
                     return {};
                 });
-                w.bind("toggleTerminal", (...data) => {
+                w.bind("toggleTerminal", () => {
                     self.postMessage({t: 'terminal'});
                     return {};
                 })
@@ -79,8 +79,8 @@ window.addEventListener('load', () => {
 <script>
 window.onload = () => {
     setTimeout(() => {
-    window.location.href = "${page}";
-}, 5000)
+        window.location.href = "${page}";
+    }, 5000)
 }
 </script>
 </body>

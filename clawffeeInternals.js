@@ -96,5 +96,7 @@ module.exports = {
             return null;
         }
         return globals.commandGlobals.functionDirectives.get(fn.name) ?? null;
-    }
+    },
+    addPluginScript: globals.addPluginScript,
+    addPluginTab: globals.addPluginTab
 }

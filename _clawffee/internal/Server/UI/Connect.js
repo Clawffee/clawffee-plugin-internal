@@ -92,7 +92,7 @@ export function listenToClawffee(path, callback) {
     if(typeof path == 'string') {
         path = path.split('/');
     }
-    create((dpath, data) => {
+    return create((dpath, data) => {
         if(path.some((v, i) => dpath[i] && dpath[i] != v)) return;
         data = getSubObject(path.slice(dpath.length), data);
         callback(dpath.slice(path.length), data);
@@ -111,7 +111,7 @@ export function getFromClawffee(path, callback) {
         const x = getSubObject(path, backup);
         if(x !== undefined) callback([], x);
     }
-    createAlways((dpath, data) => {
+    return createAlways((dpath, data) => {
         if(path.some((v, i) => dpath[i] && dpath[i] != v)) return;
         data = getSubObject(path.slice(dpath.length), data);
         callback(dpath.slice(path.length), data);

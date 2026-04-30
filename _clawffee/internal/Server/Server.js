@@ -19,6 +19,7 @@ const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/intern
  */
 const pluginPages = {};
 sharedServerData.internal.pluginPages = {};
+sharedServerData.internal.pluginPageScripts = {};
 
 if(!config.showTerminal) hideTerminal();
 
@@ -29,21 +30,27 @@ if(!config.showTerminal) hideTerminal();
  * @param {string?} iconPath
  * @param {string?} scriptPath
  */
-async function addPluginTab(pluginName, UIPath, iconPath=null, scriptPath=null) {
+async function addPluginTab(pluginName, UIPath=null, iconPath=null) {
     if(!UIPath.endsWith(".html")) {
         throw TypeError('Plugin Tab needs to be an html file');
     }
     const page = await Bun.build({entrypoints: [UIPath], target: 'browser', splitting: false, compile: true});
-    const script = (scriptPath?await Bun.build({entrypoints: [scriptPath], target: 'browser', splitting: false}):null);
     pluginPages[pluginName] = {
         page: await (page.outputs[0]?.bytes?.() ?? page.outputs[0]?.text()),
-        script: await (script?.outputs[0]?.bytes?.() ?? script?.outputs[0]?.text()),
         icon: iconPath?fs.readFileSync(iconPath).toString():null
     };
     sharedServerData.internal.pluginPages[pluginName] = {
-        hasIcon: iconPath?true:false,
-        hasScript: scriptPath?true:false
-    } 
+        hasIcon: iconPath?true:false
+    }
+}
+
+async function addPluginScript(pluginName, scriptPath) {
+    try {
+        const result = await Bun.build({entrypoints: [scriptPath], target: 'browser', splitting: false});
+        sharedServerData.internal.pluginPageScripts[pluginName] = await result.outputs[0].text();
+    } catch(e) {
+        console.error(e);
+    }
 }
 
 /**
@@ -244,6 +251,7 @@ module.exports = {
     functions,
     config,
     addPluginTab,
+    addPluginScript,
     awaitConnection: firstConnection.promise,
     openURL,
     sharedServerData
