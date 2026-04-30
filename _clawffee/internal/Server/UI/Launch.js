@@ -9,7 +9,7 @@ self.addEventListener('message', event => {
         case 'load':
             import('webview-bun').then(async ({Webview}) => {
                 let w = new Webview(false, {
-                    height: 720,
+                    height: 920,
                     width: 720,
                     hint: 1
                 });
