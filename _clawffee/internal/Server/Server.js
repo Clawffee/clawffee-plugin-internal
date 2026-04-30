@@ -15,7 +15,7 @@ const firstConnection = Promise.withResolvers();
 const builtHTML = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/UI.html"], target: 'browser', splitting: false, compile: true}).then((value) => value.outputs[0], (err) => firstConnection.reject(`Failed to build UI: ${String(err)}`));
 const builtConnect = Bun.build({entrypoints: ["plugins/internal/_clawffee/internal/Server/UI/Connect.js"], target: 'browser', splitting: false}).then((value) => value.outputs[0], (err) => firstConnection.reject(`Failed to build Connect script: ${String(err)}`));
 /**
- * @type {{[pluginName: string]: {page: Uint8Array<ArrayBuffer>, script: Uint8Array<ArrayBuffer> | undefined, icon: string?}}}
+ * @type {{[pluginName: string]: {page: Uint8Array<ArrayBuffer>, icon: string?}}}
  */
 const pluginPages = {};
 sharedServerData.internal.pluginPages = {};
@@ -23,14 +23,14 @@ sharedServerData.internal.pluginPageScripts = {};
 
 if(!config.showTerminal) hideTerminal();
 
+//TODO: add import('./UI/settingsGen.js').Template
 /**
  * 
  * @param {string} pluginName 
- * @param {string | import('./UI/settingsGen.js').Template} UIPath 
+ * @param {string} UIPath 
  * @param {string?} iconPath
- * @param {string?} scriptPath
  */
-async function addPluginTab(pluginName, UIPath=null, iconPath=null) {
+async function addPluginTab(pluginName, UIPath, iconPath=null) {
     if(!UIPath.endsWith(".html")) {
         throw TypeError('Plugin Tab needs to be an html file');
     }
@@ -44,6 +44,11 @@ async function addPluginTab(pluginName, UIPath=null, iconPath=null) {
     }
 }
 
+/**
+ * 
+ * @param {string} pluginName 
+ * @param {string} scriptPath
+ */
 async function addPluginScript(pluginName, scriptPath) {
     try {
         const result = await Bun.build({entrypoints: [scriptPath], target: 'browser', splitting: false});
