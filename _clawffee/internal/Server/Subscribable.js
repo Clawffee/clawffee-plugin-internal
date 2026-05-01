@@ -345,7 +345,7 @@ function addListener(server, path, callback, config={ activateIfUnchanged: true,
     const multiple = config.multiple ?? false;
     const parentPaths = getAllParentPaths(server);
     path = splitString(path);
-    if(!(path instanceof Array)) throw TypeError(`path is of type ${typeof path} and not an array or string`);
+    if(!Array.isArray(path)) throw TypeError(`path is of type ${typeof path} and not an array or string`);
     if(!(callback instanceof Function)) throw TypeError(`callback is of type ${typeof callback} and not a function`);
 
     if(!multiple && parentPaths.length > 1) {
@@ -415,7 +415,7 @@ function addListener(server, path, callback, config={ activateIfUnchanged: true,
  */
 function apply(server, value, path) {
     path = splitString(path);
-    if(!(path instanceof Array)) throw TypeError(`path is of type ${typeof path} and not an array or string`);
+    if(!Array.isArray(path)) throw TypeError(`path is of type ${typeof path} and not an array or string`);
     if(path.length > 0) {
         // find the object we need to edit
         while(path.length > 1) {
