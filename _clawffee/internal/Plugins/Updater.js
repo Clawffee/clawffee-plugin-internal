@@ -166,6 +166,7 @@ const path = require('path');
 const { sharedServerData } = require('../Server/SharedServerData');
 const internal = require('../../../internal');
 const { functions } = require('../Server/Server');
+const { isFileNameIgnored, isCacheDirectory } = require('./PluginLoader');
 
 function verifyModules() {
     const { promise, resolve, reject } = Promise.withResolvers();
@@ -175,7 +176,7 @@ function verifyModules() {
     const missingDeps = [];
     const paths = fs.readdirSync('plugins');
     paths.forEach((p) => {try {
-        if(p.endsWith('.upd') || p.endsWith('.bak')) return;
+        if(isFileNameIgnored(p) || isCacheDirectory(path.join('plugins', p))) return;
         /**
          * @type {versionInfo}
          */
