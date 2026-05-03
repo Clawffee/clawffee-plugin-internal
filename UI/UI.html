@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clawffee — Dashboard</title>
+    <link href="./bootstrap/bootstrap.css" rel="stylesheet">
+    <style>
+        body {
+            font-size: 90%;
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            * {
+                scroll-behavior: smooth;
+            }
+        }
+    </style>
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none">
+        <defs>
+            <symbol id="move-icon" viewBox="0 0 256 256">
+                <rect width="256" height="256" fill="none" />
+                <rect x="54.46" y="54.46" width="147.08" height="147.08" transform="translate(-53.02 128) rotate(-45)"
+                    opacity="0.2" />
+                <line x1="128" y1="160" x2="128" y2="232" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <line x1="128" y1="96" x2="128" y2="24" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <polyline points="96 56 128 24 160 56" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <polyline points="96 200 128 232 160 200" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <line x1="96" y1="128" x2="24" y2="128" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <line x1="160" y1="128" x2="232" y2="128" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <polyline points="200 96 232 128 200 160" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <polyline points="56 96 24 128 56 160" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+            </symbol>
+            <symbol id="pause-icon" viewBox="0 0 256 256">
+                <rect width="256" height="256" fill="none" />
+                <rect x="152" y="40" width="56" height="176" rx="8" opacity="0.2" />
+                <rect x="48" y="40" width="56" height="176" rx="8" opacity="0.2" />
+                <rect x="152" y="40" width="56" height="176" rx="8" fill="none" stroke="currentColor"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="24" />
+                <rect x="48" y="40" width="56" height="176" rx="8" fill="none" stroke="currentColor"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="24" />
+            </symbol>
+            <symbol id="play-icon" viewBox="0 0 256 256">
+                <rect width="256" height="256" fill="none" />
+                <path
+                    d="M72,39.88V216.12a8,8,0,0,0,12.15,6.69l144.08-88.12a7.82,7.82,0,0,0,0-13.38L84.15,33.19A8,8,0,0,0,72,39.88Z"
+                    opacity="0.2" />
+                <path
+                    d="M72,39.88V216.12a8,8,0,0,0,12.15,6.69l144.08-88.12a7.82,7.82,0,0,0,0-13.38L84.15,33.19A8,8,0,0,0,72,39.88Z"
+                    fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                    stroke-width="24" />
+            </symbol>
+            <symbol id="close-icon" viewBox="0 0 256 256">
+                <rect width="256" height="256" fill="none" />
+                <line x1="200" y1="56" x2="56" y2="200" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+                <line x1="200" y1="200" x2="56" y2="56" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="24" />
+            </symbol>
+        </defs>
+    </svg>
+    <meta clawffee_path="/internal/">
+    <script src="./Connect.js">
+    </script>
+</head>
+
+<body>
+    <script>
+        const darkModeMql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+
+        if (darkModeMql && darkModeMql.matches) {
+            document.body.setAttribute('data-bs-theme', 'dark');
+        }
+    </script>
+    <div class="modal fade" id="dependencyModal" tabindex="-1" aria-labelledby="pluginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">The following plugins need to be installed:</h1>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>V</th>
+                                <th>URL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dependencyTable">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" id="submitButton" onclick="fetch('/internal/updater/installMissingDeps/')" data-bs-dismiss="modal">Install</button>
+                </div>
+            </div>
+        </div>
+        <script>
+            window.addEventListener('load', () => {
+                globalThis.getFromClawffee(["updateInfo", "missingDeps"], (p, data) => {
+                    document.getElementById('dependencyTable').innerHTML = "";
+                    if(!data) return;
+                    (new bootstrap.Modal('#dependencyModal')).show();
+                    data.forEach((v) => {
+                        const row = document.createElement('tr');
+                        const name = document.createElement('td');
+                        name.innerText = v.folder;
+                        const version = document.createElement('td');
+                        version.innerText = v.dep.version ?? "";
+                        const url = document.createElement('td');
+                        url.appendChild(document.createElement('a'));
+                        url.firstElementChild.innerText = v.dep.url;
+
+                        row.appendChild(name);
+                        row.appendChild(version);
+                        row.appendChild(url);
+                        document.getElementById('dependencyTable').appendChild(row);
+                    });
+                });
+            });
+        </script>
+    </div>
+    <div class="modal fade" id="pluginModal" tabindex="-1" aria-labelledby="pluginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="pluginModalLabel">Modal title</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="pluginFrame">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="creditsModal" tabindex="-1" aria-labelledby="creditsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="creditModalLabel">Credits</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body container">
+                    <style>
+                        .credits {
+                            & a {
+                                font-weight: bolder;
+                            }
+                        }
+                    </style>
+                    <div class="credits">
+                        <h3 class="text-center mb-3">Dependencies</h3>
+                        <div class="row g-2">
+                            <div class="col-6 text-center"><a href="https://bun.com/">Bun</a></div>
+                            <div class="col-6 text-center"><a href="https://github.com/acornjs/acorn">Acorn</a></div>
+                            <div class="col-6 text-center"><a href="https://getbootstrap.com/">Bootstrap 5.3</a></div>
+                            <div class="col-6 text-center"><a href="https://paulmillr.com/">Paulmillr - Chokidar</a></div>
+                            <div class="col-6 text-center"><a href="https://github.com/mafintosh/tar-stream">Mafintosh - Tar-Stream</a></div>
+                            <div class="col-6 text-center"><a href="https://github.com/tr1ckydev/webview-bun">Tr1ckydev - Webview-Bun</a></div>
+                            <div class="col-6 text-center"><a href="https://github.com/npm/ini">ini</a></div>
+                            <div class="col-6 text-center"><a href="https://twurple.js.org/">Twurple</a></div>
+                        </div>
+                        <hr>
+                        <h3 class="text-center mb-3">Contributors</h3>
+                        <div class="row g-2">
+                            <div class="col-6 text-center"><a href="https://ffoxes.com/">fFoxes</a></div>
+                            <div class="col-6 text-center"><a href="https://github.com/liquidnya">Alice ✨🌙 Luna</a></div>
+                        </div>
+                        <hr>
+                        <h3 class="text-center mb-3">Supporters</h3>
+                        <div class="row g-2">
+                            <div class="col-4 text-center">Cosmic</div>
+                            <div class="col-4 text-center">fFoxes</div>
+                            <div class="col-4 text-center">Spardie</div>
+                            <!-- Move this out of pre-load when assets start being loaded -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const pluginFrame = document.getElementById('pluginFrame');
+        /**
+         * @param {string} url
+         */
+        async function loadPage(url, name) {
+            document.getElementById('pluginModalLabel').innerText = name + " Settings";
+            const div = document.createElement('div');
+            div.innerHTML = await (await fetch(url)).text();
+            pluginFrame.replaceChildren(...div.children);
+            pluginFrame.querySelectorAll('script').forEach(v => {
+                let script = document.createElement('script');
+                script.innerHTML = v.innerHTML;
+                v.parentElement.replaceChild(script, v);
+            });
+        }
+    </script>
+    <nav class="navbar fixed-bottom bg-body-tertiary">
+        <div class="container-fluid">
+            <h5>Clawffee</h5>
+            <style>
+                .terminal {
+                    position: relative;
+                    align-content: end;
+                    height: calc(100vh - 5em);
+                    width: 100vw;
+                    overflow: hidden;
+                    font-family: monospace;
+                    font-size: 80%;
+
+                    i&::after {
+                        content: "";
+                        position: absolute;
+                        top: 0;
+                        height: 32px;
+                        left: 0;
+                        right: 0;
+                        background: linear-gradient(180deg, var(--bs-tertiary-bg), transparent);
+                        z-index: 10;
+                    }
+
+                    &>* {
+                        z-index: -1;
+                    }
+                }
+
+                #consoleWindow {
+                    max-height: calc(100vh - 5em);
+                    overflow: hidden scroll;
+                    display: grid;
+                    grid-template-columns: min-content auto;
+
+                    &>* {
+                        box-sizing: content-box;
+                        padding-left: 4px;
+                        padding-right: 4px;
+                        vertical-align: top;
+                        --text-color: var(--bs-tertiary-color);
+
+                        &:nth-child(odd) {
+                            border-right: 2px solid var(--text-color);
+                            text-align: start;
+                            max-width: 30vw;
+                            overflow-x: hidden;
+                            overflow-y: visible;
+                            word-break: keep-all;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            z-index: 2;
+
+                            &>* {
+                                display: flex;
+                                width: max-content;
+                                flex-wrap: wrap;
+                            }
+                        }
+
+                        &:nth-child(even) {
+                            word-break: break-all;
+                            line-break: anywhere;
+                            text-wrap-mode: wrap;
+                            text-wrap-style: pretty;
+                            z-index: 1;
+                            overflow-x: visible;
+                            padding-left: calc(1ch + 3px);
+                        }
+
+                        &:nth-child(4n + 1),
+                        &:nth-child(4n + 2) {
+                            background-color: #ffffff06;
+                        }
+                    }
+                }
+            </style>
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample"
+                aria-controls="offcanvasExample">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+        <div class="terminal bg-body mt-2">
+            <div id="consoleWindow"></div>
+        </div>
+        <script src="./TerminalUI.js"></script>
+    </nav>
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="offcanvasExampleLabel">Clawffee</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column">
+            <p>Plugin Settings: </p>
+            <ul class="nav nav-pills flex-column mb-auto" style="overflow-y: auto; flex-wrap: nowrap;"
+                id="pluginTabList">
+                <template id="pluginTab">
+                    <li class="nav-item">
+                        <button type="button" class="nav-link link-primary" style="align-items: center; align-content: center; text-align: center; vertical-align: middle;" data-bs-toggle="modal" data-bs-target="#pluginModal">
+                            <span class="me-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                    class="bi" viewBox="0 0 16 16">
+                                    <path
+                                        d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
+                                </svg>
+                            </span>
+                            <span id="pluginname" style="text-align: center;"></span>
+                        </button>
+                    </li>
+                </template>
+            </ul>
+            <script>
+                const pluginTabNames = [];
+                const pluginTabButton = document.getElementById('pluginTab');
+                const pluginTabList = document.getElementById('pluginTabList');
+                window.addEventListener('load', () => {
+                    globalThis.getFromClawffee(["pluginPages"], (p, data) => {
+                        Object.entries(data).forEach(async ([name, data]) => {
+                            if (!name) return;
+                            if (pluginTabNames.includes(name)) {
+                                const index = pluginTabNames.indexOf(name);
+                                pluginTabNames.splice(index, 1);
+                                pluginTabList.childNodes[index].remove(); // TODO: this isnt working
+                            }
+                            const copiedButton = document.importNode(pluginTabButton.content, true);
+                            const index = pluginTabNames.indexOf(v => v.localeCompare(name) > 0);
+                            pluginTabNames.splice(index, 0, name);
+                            copiedButton.querySelector('#pluginname').textContent = name;
+                            copiedButton.querySelector('button').addEventListener('click', () => {
+                                loadPage('./plugin/page/' + name, name);
+                            })
+                            if (data.hasIcon) copiedButton.querySelector('svg').innerHTML = '<use href="./plugin/icon/' + name + '.svg#main" />';
+                            if (data.hasScript) {
+                                const scriptVal = (await (await fetch('./plugin/script/' + name)).text())
+                                document.body.innerHTML +=
+                                    "<script>"
+                                    + scriptVal
+                                    + "<\/script>";
+                            }
+                            if (index == -1) {
+                                pluginTabList.appendChild(copiedButton);
+                            } else {
+                                pluginTabList.insertBefore(copiedButton, pluginTabList.childNodes[index]);
+                            }
+                        })
+                    });
+                });
+            </script>
+            <hr>
+            <ul class="nav nav-pills flex-column">
+                <li>
+                    <a href="https://discord.gg/744T53nJFu" class="nav-link link-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-discord me-2" viewBox="0 0 16 16">
+                            <path
+                                d="M13.545 2.907a13.2 13.2 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.2 12.2 0 0 0-3.658 0 8 8 0 0 0-.412-.833.05.05 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.04.04 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032q.003.022.021.037a13.3 13.3 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019q.463-.63.818-1.329a.05.05 0 0 0-.01-.059l-.018-.011a9 9 0 0 1-1.248-.595.05.05 0 0 1-.02-.066l.015-.019q.127-.095.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.05.05 0 0 1 .053.007q.121.1.248.195a.05.05 0 0 1-.004.085 8 8 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.2 13.2 0 0 0 4.001-2.02.05.05 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.03.03 0 0 0-.02-.019m-8.198 7.307c-.789 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612m5.316 0c-.788 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612" />
+                        </svg>
+                        Discord
+                    </a>
+                </li>
+                <li>
+                    <a href="https://patreon.com/KatzenTatzenTanz" class="nav-link link-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-heart-fill me-2" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd"
+                                d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314" />
+                        </svg>
+                        Support me!
+                    </a>
+                </li>
+                <li>
+                    <button type="button" class="nav-link link-primary" style="align-items: center; align-content: center; text-align: center; vertical-align: middle;" data-bs-toggle="modal" data-bs-target="#creditsModal">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-envelope-open-heart-fill me-2" viewBox="0 0 16 16">
+                            <path
+                                d="M8.941.435a2 2 0 0 0-1.882 0l-6 3.2A2 2 0 0 0 0 5.4v.313l4.222 2.475q.035-.087.08-.17c.665-1.3 2.362-1.917 3.698-1.25 1.336-.667 3.033-.05 3.699 1.25a3 3 0 0 1 .08.17L16 5.713V5.4a2 2 0 0 0-1.059-1.765zM0 6.873l4 2.344c-.012.542.124 1.117.416 1.694l.004.006L0 13.372v-6.5Zm.059 7.611 4.9-2.723c.563.73 1.383 1.467 2.49 2.198l.551.365.551-.365c1.107-.73 1.927-1.467 2.49-2.198l4.9 2.723A2 2 0 0 1 14 16H2a2 2 0 0 1-1.941-1.516M16 13.372l-4.42-2.455.004-.006c.292-.577.428-1.152.415-1.694L16 6.873v6.5Z" />
+                            <path d="M8 7.993c1.664-1.711 5.825 1.283 0 5.132-5.825-3.85-1.664-6.843 0-5.132" />
+                        </svg>
+                        Credits!
+                    </button>
+                </li>
+            </ul>
+            <hr>
+            <span>
+                <span class="badge bg-primary" style="width: fit-content;" id="version-tag"></span>
+                by Katzentatzentanz 🐾
+            </span>
+            <script>
+                window.addEventListener('load', () => {
+                    globalThis.getFromClawffee(["updateInfo", "version"], (p, data) => {
+                        document.getElementById('version-tag').innerText = data;
+                    });
+                });
+            </script>
+        </div>
+    </div>
+    <article>
+        <div class="row row-cols-2 g-3 m-1">
+            <template>
+                <div class="col">
+                    <div class="card" style="overflow: hidden;">
+                        <div class="row g-0" style="height: 9cap">
+                            <div class="col" style="min-width: 8cap; flex-grow: 0;">
+                                <img src="./clawffee96.png" class="img-fluid rounded-start"
+                                    style="height: 8cap">
+                            </div>
+                            <div class="col">
+                                <div class="card-body">
+                                    <h5 class="card-title">Button Title</h5>
+                                </div>
+                            </div>
+                            <div style="background-color: red; height: 2em;"></div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </article>
+    <script>
+        function addScript(s) {
+            const script = document.createElement('script');
+            script.innerHTML = s;
+            document.body.appendChild(script);
+        }
+        window.addEventListener('load', () => {
+            globalThis.getFromClawffee(["pluginPageScripts"], (p, data) => {
+                try {
+                    if(p.length > 0) {
+                        addScript(data);
+                    } else {
+                        Object.values(data).forEach((v) => {
+                            addScript(v);
+                        })
+                    }
+                } catch(e) {
+                    console.error(e.message);
+                }
+            });
+        });
+    </script>
+    <script src="./bootstrap/bootstrap.esm.min.js"></script>
+</body>
+
+</html>

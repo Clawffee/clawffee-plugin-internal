@@ -1,0 +1,80 @@
+<div>
+    <div class="form-floating mb-3">
+        <input class="form-control" id="port" type="number" placeholder="Port" data-sb-validations="required" />
+        <label for="port">Port</label>
+        <div class="invalid-feedback" data-sb-feedback="port:required">Port is required.</div>
+    </div>
+    <div class="mb-3">
+        <div class="form-check form-switch">
+            <input class="form-check-input" id="logDebugValues" type="checkbox" name="logDebugValues" />
+            <label class="form-check-label" for="logDebugValues">Log Debug Values</label>
+        </div>
+    </div>
+    <div class="mb-3">
+        <div class="form-check form-switch">
+            <input class="form-check-input" id="showTerminal" type="checkbox" name="showTerminal" />
+            <label class="form-check-label" for="showTerminal">Show Terminal App (Windows only)</label>
+        </div>
+    </div>
+    <div class="d-flex flex-end">
+        <button class="btn btn-primary disabled" id="submitButton">Save</button>
+    </div>
+</div>
+<script>
+{
+    const doc = document.currentScript.parentElement;
+    /**
+     * @type {HTMLInputElement}
+     */
+    const port = doc.querySelector("#port");
+    /**
+     * @type {HTMLInputElement}
+     */
+    const printDebug = doc.querySelector("#logDebugValues");
+    /**
+     * @type {HTMLInputElement}
+     */
+    const showTerminal = doc.querySelector("#showTerminal");
+    /**
+     * @type {HTMLButtonElement}
+     */
+    const saveButton = doc.querySelector('#submitButton');
+    let changes = {};
+    const x = window.getFromClawffee(["serverConfig"], (p, data) => {
+        port.value = data.port;
+        port.placeholder = data.port;
+        port.onchange = () => {
+            changes.port = parseInt(port.value);
+            saveButton.ariaDisabled = false;
+            saveButton.classList.remove('disabled');
+        }
+        printDebug.checked = data.printDebug;
+        printDebug.onchange = () => {
+            changes.printDebug = printDebug.checked;
+            saveButton.ariaDisabled = false;
+            saveButton.classList.remove('disabled');
+        }
+        showTerminal.checked = data.showTerminal;
+        showTerminal.onchange = () => {
+            changes.showTerminal = showTerminal.checked;
+            saveButton.ariaDisabled = false;
+            saveButton.classList.remove('disabled');
+        }
+        saveButton.onclick = () => {
+            if(saveButton.disabled) return;
+            fetch(`/internal/dashboard/plugin/save/Server/`, {body:JSON.stringify(changes), method: 'POST'});
+        }
+        saveButton.onkeyup = (ev) => {
+            if(ev.key == '\n') {
+                saveButton.click();
+            }
+        }
+    });
+    new MutationObserver(function() {
+        if(!document.body.contains(doc)) {
+            x.off();
+            this.disconnect();
+        }
+    }).observe(doc.parentElement, {childList: true});
+}
+</script>
