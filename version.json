@@ -10,5 +10,11 @@
             "version": "^0"
         }
     },
+    "dependents": {
+        "launcher": {
+            "version": ">=0.9.0",
+            "pluginApi": "v0"
+        }
+    },
     "hash": "luiQykvfAn+hsm+e0w+Ox+Vg0tVYU+jtN1MqUaV3YX03AMNorSalh/DNIa4pbDe2EyCcfphgy4KjKaGnhLVMVHOcaPm4dtW5iFUqyJYDCRPzoVryRF6TpirgKGmOYL3Y6D71BGrM8c7OMLRRWdgzU8lB+P8ydpkHKs/PvOM1vKfQT/luz+EgNDcbXXiJNg7C/CeGx701yUdjJyGMJmrxt0NUzRy9AC/lu8jRpSHmn4WdJhoQvKC3JlYVc7K+57bzXaWDODsrRUSl/eghPew0wZNnySZXCQvLDTlTSELdRbWAbtQwrozWDECTg6Ghxa5H3Se3Vbsu5gPAA7vn74pyNA1qc0dg2G7uwsbz/2Bx/ntYcXhovzsZBOHLikY6Mu7bj5BhIgT1w66Li6FsUTvoS2zcMMMzwA786YpzW2Iww8i5RHA0A5BVELp2g4v8zlyAk4OIuc3xoK4kOtcdTu7FkrtRzk776gopifm0m/uV8yCAOzmJw05brsLw1/7N4fmzjsmlsG1LpN9/4py7CqsSi5sjEwg0S9CvK1BZgLJ/olEF/AY3Y+EAxe1lX/O0m2ZCb9wAFTj7KV+NSD7dfp5ZKUPBSVfuBfMe+wbwPwdoDlmaKL2wpa7nYxaWqLqDDUhaSK6DAU9RlLa3Oq37W++c4EJrEjSk0eovgHjvxETEnjA="
 }
