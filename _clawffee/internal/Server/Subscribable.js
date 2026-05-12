@@ -12,12 +12,12 @@ server: {
         │                                       
         ▼                                       
 parentListeners: {                              
-  "Reference to self": [],                      
+  "Reference to server": [],                      
   "Reference to a": [                           
-    [["Reference to self"], "a"],               
-    [["Reference to self"], "c"]                
+    [["Reference to server"], "a"],               
+    [["Reference to server"], "c"]                
   ],                                            
-  "Reference to b": [["Reference to self"], "b"]
+  "Reference to b": [["Reference to server"], "b"]
 }                                               
         │                                       
         ▼                                       
@@ -44,42 +44,37 @@ server.a.a = 5
 */
 
 /**
+ * @typedef ListenerConfig
+ * @property {Boolean} activateFromParent
+ */
+/**
+ * @typedef ListenerData
+ * 
+ * @property {import('../Hooks/HookHelper').HookHelper<ServableListener>} ownListeners
+ * @property {Map<string, ListenerData>} childListeners
+ */
+const { simpleHookMgr } = require('../Hooks/HookHelper');
+/**
+ * Link between objects and their corresponding Proxy, used to get the Proxy when setting values on the original object
+ * @type {WeakMap<any, ProxyData> }
+ */
+const ProxyObjDict = new WeakMap();
+
+/**
  * @callback ServableListener
  * @param {string[]} path the relative path that was changed from the object that is being listened to
  * @param {object} newValue the new value of the object at the relative path
  * @param {object} oldValue the old value of the object at the relative path
  * @param {object} self the value at the path
+ * @param {ListenerConfig} config extra data about the set operation
  */
 /**
- * @typedef Listener
- * @property {ServableListener} callback
- * @property {Boolean} activateFromParent
- * @property {Boolean} activateIfUnchanged
- * @property {Boolean} suppressInitialSet
- */
-/**
- * @typedef ListenerData
- * 
- * @property {Map<string, Listener[]>} ownListeners
- * @property {Map<string, ListenerData>} childListeners
- * @property {boolean?} initialSet
+ * @typedef ProxyData
+ * @prop {Listenable<any>} orig
+ * @prop {ListenerData} Listeners
+ * @prop {Map<ProxyData, Set<string>>} Parents
  */
 
-/**
- * Link between objects and their corresponding Proxy, used to get the Proxy when setting values on the original object
- * @type {WeakMap<any, Proxy>}
- */
-const ProxyObjDict = new WeakMap();
-/**
- * References from objects to their parent Servers
- * @type {WeakMap<Proxy, [Proxy, string][]>}
- */
-const ParentDict = new WeakMap();
-/**
- * References from server objects to their Listener trees
- * @type {WeakMap<Proxy, ListenerData>}
- */
-const ListenerDict = new WeakMap();
 
 /**
  * Splits a string into a path
@@ -93,377 +88,200 @@ function splitString(path) {
     return path.split(/\.|\[|\]/).filter(Boolean);
 }
 
-/* ------------------------------- PARENTDICT ------------------------------- */
-
 /**
- * Remove the link to a parent from a value in ProxyObjDict
- * @param {Proxy} value 
- * @param {Proxy} parent 
- * @param {string} property 
+ * 
+ * @param {ProxyData} listenable 
+ * @param {string[]} path 
+ * @param {any} newValue 
+ * @param {any} prevValue
  */
-function removeParent(value, parent, property) {
-    let v;
-    if(v = ParentDict.get(value)) {
-        ParentDict.set(value, v.filter(v => v[0] != parent || v[1] != property));
-    }
-}
-/**
- * Add a link to a parent for a value in ProxyObjDict
- * @param {Proxy} value 
- * @param {Proxy} parent 
- * @param {string} property 
- */
-function addParent(value, parent, property) {
-    ParentDict.get(value)?.push([parent, property]);
-}
-
-/**
- * Get all the shortest path (if recursive) from an object to a server object
- * @param {Proxy} value 
- * @param {WeakSet<any>} traveled
- * @returns {[any, string[]][]}
- */
-function getAllParentPaths(value, traveled=new WeakSet()) {
-    // anti infinite recursion
-    if(traveled.has(value)) {
-        return [];
-    }
-    // reached endpoint
-    if(!ParentDict.has(value)) {
-        return [[
-            value,
-            []
-        ]];
-    }
-    traveled.add(value);
-
-    //recurse through parents and append their paths
-    const parents = ParentDict.get(value) ?? [];
+function callback(listenable, path, newValue, prevValue, cache=new Set()) {
+    if(cache.has(listenable)) return;
+    cache.add(listenable);
     /**
-     * @type {[any, string[]][]}
+     * 
+     * @param {ListenerData} listener
+     * @param {string[]} path 
+     * @param {any} newValue
+     * @param {any} prevValue
+     * @param {any} self
+     * @param {ListenerConfig} config
      */
-    let result = [];
-    parents.forEach(element => {
-        const obj = element[0];
-        const key = element[1];
-        result = result.concat(
-            getAllParentPaths(obj, traveled).map(
-                v => [v[0], v[1].concat([key])] // [object, "path of parent + relativepath"]
-            ));
-    });
-
-    traveled.delete(value);
-    return result;
-}
-
-/* ------------------------------ LISTENERDICT ------------------------------ */
-
-/**
- * 
- * @param {ListenerData} listener 
- * @param {any} value 
- * @param {any} oldValue
- * @param {boolean?} initiallyset
- */
-function callChildren(listener, value, oldValue, initiallyset = false) {
-    listener.ownListeners.forEach((v, key) => {
-        const nV = typeof value == 'object'?value[key]:undefined;
-        const oV = typeof oldValue == 'object'?oldValue[key]:undefined;
-        v.forEach(v => {
-            if(
-                !v.activateFromParent 
-                || (!v.activateIfUnchanged && oV === nV)
-                || (v.suppressInitialSet && initiallyset)
-            ) return;
-            v.callback([], nV, oV, nV);
-        });
-    });
-    listener.childListeners.forEach((v, key) => {
-        callChildren(
-            v,
-            typeof value == 'object'?value[key]:undefined,
-            typeof oldValue == 'object'?oldValue[key]:undefined
-        );
-    });
-}
-
-let suppressAffected = false;
-/**
- * 
- * @param {any} obj 
- * @param {any} property
- * @param {any} originalValue
- */
-function callAllAffected(obj, property=null, originalValue=undefined) {
-    if(suppressAffected) {
-        return;
-    }
-    const newValue = property == null?obj:obj[property];
-    const parentPaths = getAllParentPaths(obj);
-    parentPaths.forEach((value) => {
-        let server = value[0];
-        let listener = ListenerDict.get(server);
-        if(!listener) return;
-        const initiallyset = listener.initialSet;
-        listener.initialSet = false;
-        let path = value[1];
-        if(property)
-            path.push(property);
-        /**
-         * @type {string}
-         */
-        let curpath;
-        //@ts-ignore
-        while(listener && (curpath = path.shift())) {
-            // call parents that a child at path has changed
-            (listener.ownListeners.get(curpath) ?? []).forEach(v => {
-                if(
-                    !v.activateIfUnchanged && originalValue === newValue
-                    || v.suppressInitialSet && initiallyset
-                ) return;
-                v.callback(path, newValue, originalValue, server[curpath]);
-            });
-            listener = listener.childListeners.get(curpath)
-            server = server[curpath];
-        }
-        if(listener) {
-            callChildren(listener, server, originalValue, initiallyset);
-        }
-    });
-}
-
-/**
- * 
- * @returns {ListenerData}
- */
-function createEmptyListener() {
-    return {
-        ownListeners: new Map(),
-        childListeners: new Map(),
-        initialSet: null
-    }
-}
-
-/* ---------------------------------- PROXY --------------------------------- */
-
-function setter(target, property, value, receiver) {
-    const proxy = ProxyObjDict.get(target);
-    const oldValue = target[property];
-    value = createProxy(value);
-    const result = Reflect.set(target, property, value, receiver);
-    if(result) {
-        removeParent(oldValue, proxy, property);
-        addParent(value, proxy, property);
-        callAllAffected(proxy, property, oldValue);
-    }
-    return result;
-}
-function deleteProperty(target, property) {
-    const proxy = ProxyObjDict.get(target);
-    const oldValue = target[property];
-    const result = Reflect.deleteProperty(target, property);
-    if(result) {
-        removeParent(oldValue, proxy, property);
-        callAllAffected(proxy, property, oldValue);
-    }
-    return result;
-}
-
-/**
- * 
- * @template T
- * @param {T} obj c
- * @returns {T}
- */
-function createProxy(obj) {
-    if (typeof obj !== "object" || obj === null) {
-        return obj
-    }
-    if (ProxyObjDict.has(obj)) {
-        return ProxyObjDict.get(obj);
-    }
-    const proxy = new Proxy(obj, {
-        set: setter,
-        deleteProperty: deleteProperty,
-    });
-
-    ProxyObjDict.set(obj, proxy).set(proxy, proxy);
-    ParentDict.set(proxy, []);
-
-    for (const property in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, property)) {
-            const value = obj[property];
-            if (typeof value === "object" && value !== null) {
-                const child = createProxy(value);
-                obj[property] = child; 
-                ParentDict.get(child)?.push([proxy, property]);
+    function callListeners(listener, path, newValue, prevValue, self, config) {
+        if(path[0]) {
+            let l;
+            if(l = listener.childListeners.get(path[0])) callListeners(l, path.slice(1), newValue, prevValue, self?.[path[0]], config);
+        } else {
+            config.activateFromParent = true;
+            for(let l of listener.childListeners.entries()) {
+                callListeners(l[1], [], newValue?.[l[0]], prevValue?.[l[0]], prevValue?.[l[0]], config);
             }
         }
+        listener.ownListeners.call(path, newValue, prevValue, self, config);
     }
-
-    return proxy;
+    callListeners(listenable.Listeners, path, newValue, prevValue, listenable.orig, {activateFromParent: false});
+    listenable.Parents.forEach((v, k) => {
+        v.forEach(p => {
+            callback(k, [p, ...path], newValue, prevValue, cache);
+        });
+    });
+    cache.delete(listenable);
 }
 
-/* ---------------------------- EXPOSED FUNCTIONS --------------------------- */
+/**
+ * @typedef {{[x in keyof T]: T[x] extends object?Listenable<T[x]>:T[x]}} Listenable
+ * @template {object} T
+ */
+
+/**
+ * 
+ * @param {Listenable<any>} obj 
+ */
+function applyChildren(obj) {
+    const ListenData = ProxyObjDict.get(obj);
+    if(!ListenData) return;
+    Object.entries(obj).forEach(e => {
+        if(typeof e[1] == 'object' && e[1] != null) {
+            const x = proxyWrapper(e[1]);
+            const ChildData = ProxyObjDict.get(x);
+            if(!ChildData) return;
+            if(!ChildData.Parents.has(ListenData)) ChildData.Parents.set(ListenData, new Set());
+            ChildData.Parents.get(ListenData)?.add(e[0]);
+        }
+    });
+}
+
+/**
+ * 
+ * @param {T} obj
+ * @returns {Listenable<T>}
+ * @template {object} T
+ */
+function proxyWrapper(obj) {
+    let ret1;
+    //@ts-ignore
+    if(ret1 = ProxyObjDict.get(obj)) return ret1.orig;
+    /**
+     * @type {ProxyData}
+     */
+    let ListenData;
+    /**
+     * @type {Listenable<T>}
+     */
+    //@ts-ignore
+    const ret = new Proxy(obj, {
+        get(target, p, receiver) {
+            let v = Reflect.get(target, p, receiver);
+            if(typeof p == 'symbol' || typeof v != 'object' || v == null) return v;
+            return proxyWrapper(v);
+        },
+        set(target, p, newValue, receiver) {
+            if(
+                typeof p == 'string' && (
+                    ListenData.Listeners.childListeners.has(p) 
+                    || Object.keys(ListenData.Listeners.ownListeners).length > 0
+                    || ListenData.Parents.size > 0
+                )
+            ) {
+                const v = Reflect.get(target, p, receiver);
+                if(typeof v == 'object' && v != null) {
+                    const x = proxyWrapper(v);
+                    const ChildData = ProxyObjDict.get(x);
+                    if(ChildData) {
+                        ChildData.Parents.get(ListenData)?.delete(p);
+                        if((ChildData.Parents.get(ListenData)?.size ?? 1) == 0)
+                            ChildData.Parents.delete(ListenData);
+                    }
+                }
+                if(typeof newValue == 'object' && newValue != null) {
+                    const x = proxyWrapper(newValue);
+                    const ChildData = ProxyObjDict.get(x);
+                    if(ChildData) {
+                        if(!ChildData.Parents.has(ListenData)) ChildData.Parents.set(ListenData, new Set());
+                        ChildData.Parents.get(ListenData)?.add(p);
+                    }
+                }
+                callback(ListenData, [p], newValue, v);
+            }
+            return Reflect.set(target, p, newValue, receiver);
+        },
+        deleteProperty(target, p) {
+            if(
+                typeof p == 'string' && (
+                    ListenData.Listeners.childListeners.has(p) 
+                    || Object.keys(ListenData.Listeners.ownListeners).length > 0
+                    || ListenData.Parents.size > 0
+                )
+            ) {
+                const v = Reflect.get(target, p, target);
+                if(typeof v == 'object' && v != null) {
+                    const x = proxyWrapper(v);
+                    const ChildData = ProxyObjDict.get(x);
+                    if(ChildData) {
+                        ChildData.Parents.get(ListenData)?.delete(p);
+                        if((ChildData.Parents.get(ListenData)?.size ?? 1) == 0)
+                            ChildData.Parents.delete(ListenData);
+                    }
+                }
+                callback(ListenData, [p], null, v);
+            }
+            return Reflect.deleteProperty(target, p);
+        }
+    });
+    ListenData = {
+        orig: ret,
+        Listeners: {
+            childListeners: new Map(),
+            ownListeners: simpleHookMgr()
+        },
+        Parents: new Map()
+    }
+    ProxyObjDict.set(obj, ListenData);
+    ProxyObjDict.set(ret, ListenData);
+
+    applyChildren(ret);
+
+    return ret;
+}
+/**
+ * add a listener to a Servable object
+ * @param {Listenable<any>} obj - Server to attach to
+ * @param {string | string[]} path - Path to listen to
+ * @param {ServableListener} callback - Callback to be called when the value changes
+ */
+function addListener(obj, path, callback) {
+    if(typeof path == 'string') {
+        path = splitString(path);
+    }
+    const ListenData = ProxyObjDict.get(obj);
+    if(!ListenData) throw "Shouldnt happen";
+    let l = ListenData.Listeners;
+    let a;
+    while(a = path.shift()) {
+        if(!l.childListeners.has(a)) {
+            l.childListeners.set(a, {
+                childListeners: new Map(),
+                ownListeners: simpleHookMgr()
+            })
+        }
+        //@ts-ignore
+        l = l.childListeners.get(a);
+    }
+    return l.ownListeners.create(callback);
+}
 
 /**
  * Creates a server proxy object with the provided data.
- * @template T
+ * @template {object} T
  * @param {T} obj - The initial data to be used for the server proxy.
- * @returns {T} The proxy object representing the server.
+ * @returns {Listenable<T>} The proxy object representing the server.
  */
+//@ts-ignore
 function createServer(obj={}) {
-    const proxy = createProxy(obj);
-    const root = {root: proxy};
-    ParentDict.get(proxy).push([root, "root"])
-    ListenerDict.set(root, createEmptyListener())
-    ListenerDict.get(root).initialSet = true;
-    return proxy;
-}
-
-/**
- * @typedef ServerListener
- * @property {ServableListener} Callback - the callback that will be called when this object is run
- * @property {Function} removeSelf - function to stop the listener from listening
- * @private 
- * @property {WeakRef<Function>} _WeakRef - a reference to the weak reference used internally
- * @property {ListenerData} _AttachedListener - the child listener that is used internally
- */
-/**
- * add a listener to a Servable object
- * @param {object} server - Server to attach to
- * @param {string} path - Path to listen to
- * @param {ServableListener} callback - Callback to be called when the value changes
- * @param {boolean} activateIfUnchanged - Should the callback be run when the value was set to itself?
- * @param {boolean} activateFromParent - Should the callback be run when the value is changed through its parent?
- * @returns {ServerListener} - Listener Object
- */
-function addListener(server, path, callback, config={ activateIfUnchanged: true, activateFromParent: true, suppressInitialSet: false, multiple: false }) {
-    const activateIfUnchanged = config.activateIfUnchanged ?? true;
-    const activateFromParent = config.activateFromParent ?? true;
-    const suppressInitialSet = config.suppressInitialSet ?? false;
-    const multiple = config.multiple ?? false;
-    const parentPaths = getAllParentPaths(server);
-    path = splitString(path);
-    if(!(path instanceof Array)) throw TypeError(`path is of type ${typeof path} and not an array or string`);
-    if(!(callback instanceof Function)) throw TypeError(`callback is of type ${typeof callback} and not a function`);
-
-    if(!multiple && parentPaths.length > 1) {
-        console.warn("Creating multiple callbacks with one call, set `multiple` to true to suppress warning " +
-            "and expect an array instead of a single callback object");
-    }
-    
-    const callbackarr = [];
-    parentPaths.forEach((value) => {
-        let server = value[0];
-        let listener = ListenerDict.get(server);
-        if(listener == undefined) {
-            throw TypeError("Object is not listenable");
-        }
-        // abspath will always at least contain "root"
-        let abspath = value[1].concat(path);
-        // create all the paths up to the path we need
-        while(abspath.length > 1) {
-            const curpath = abspath.shift();
-            if(!listener.childListeners.has(curpath)) {
-                listener.childListeners.set(curpath, createEmptyListener())
-            }
-            listener = listener.childListeners.get(curpath)
-        }
-        if(listener == undefined) {
-            throw EvalError("Could not correctly create listener");
-        }
-        // add the callback to the list
-        if(!listener.ownListeners.has(abspath[0])) {
-            listener.ownListeners.set(abspath[0], [])
-        };
-        const callbackObj = {
-            callback: callback,
-            activateIfUnchanged: activateIfUnchanged,
-            activateFromParent: activateFromParent,
-            suppressInitialSet: suppressInitialSet
-        }
-        listener.ownListeners.get(abspath[0]).push(callbackObj);
-        const callbackRetObj = {
-            callback: callbackObj,
-            _AttachedListener: listener,
-            _Property: abspath[0],
-            removeSelf: () => {
-                if (!this._AttachedListener) {
-                    return;
-                }
-                this._AttachedListener.ownListeners.set(
-                    this._Property, 
-                    this._AttachedListener.ownListeners.get(this._Property).filter((val) => val != this.callback)
-                );
-                this._AttachedListener = null;
-            }
-        };
-        if(!multiple) {
-            return callbackRetObj
-        }
-        callbackarr.push(callbackRetObj);
-    });
-    return callbackarr;
-}
-
-/**
- * Apply a value to a server object at a given path
- * @param {object} server - server object to be set 
- * @param {value} value - value to apply on the server
- * @param {string[]|string} path - path at which to apply the value
- */
-function apply(server, value, path) {
-    path = splitString(path);
-    if(!(path instanceof Array)) throw TypeError(`path is of type ${typeof path} and not an array or string`);
-    if(path.length > 0) {
-        // find the object we need to edit
-        while(path.length > 1) {
-            const currentPath = path.shift();
-            // if the object doesnt exist create it (this can definitely cause jank)
-            if(typeof server[currentPath] != "object" || server[currentPath] === null) {
-                if(/^[0-9]$/.test(currentPath)) {
-                    server[currentPath] = [];
-                } else {
-                    server[currentPath] = {};
-                }
-            }
-            server = server[currentPath];
-        }
-        // edit the object
-        // edit the object
-        if(value == undefined) {
-            delete server[path[0]];
-        } else {
-            server[path[0]] = value;
-        }
-        server[path[0]] = value;
-        return;
-    }
-    if(typeof value != "object" || value === null) {
-        throw TypeError("value cannot be non object if path is empty")
-    }
-    const originalValue = {};
-    { // block where no changes will be made public
-        suppressAffected = true;
-        for (const key in server) {
-            if (Object.prototype.hasOwnProperty.call(server, key)) {
-                originalValue[key] = server[key];
-                delete server[key];
-            }
-        }
-        for (const key in value) {
-            if (Object.prototype.hasOwnProperty.call(value, key)) {
-                server[key] = value[key];
-            }
-        }
-        suppressAffected = false;
-    }
-    callAllAffected(server, null, originalValue);
+    return proxyWrapper(obj);
 }
 
 module.exports = {
     createServer,
-    addListener,
-    apply
+    addListener
 };

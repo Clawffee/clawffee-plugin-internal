@@ -2,7 +2,7 @@
 const { createServer } = require('./Subscribable.js');
 
 /**
- * @type {{[x: string]: any}}
+ * @type {any}
  */
 const sharedServerData = createServer({internal: {}});
 globalThis.sharedServerData = sharedServerData;
