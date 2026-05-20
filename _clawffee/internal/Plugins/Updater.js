@@ -140,9 +140,29 @@ async function initUpdate(path, data) {
     try {
         res = await fetch(data.url);
     } catch(e) {
+        console.debug(e);
         return console.warn('failed to check for updates for', path)
     }
-    if(res.status != 200) return console.warn('failed to check for updates for', path);
+    if(res.status != 200) {
+        console.warn('failed to check for updates for', path, `(HTTP status ${res.status})`);
+        try {
+            const errorJson = await res.json();
+            if (errorJson != null && typeof errorJson === "object") {
+                if ("message" in errorJson) {
+                    if (String(errorJson.message).includes("API rate limit exceeded")) {
+                        console.warn("the reason for this failure is, that you are being rate limited by GitHub");
+                    }
+                    console.debug(`GitHub: ${String(errorJson.message)}`);
+                }
+                if ("documentation_url" in errorJson) {
+                    console.debug(`GitHub Documentation: ${String(errorJson.documentation_url)}`);
+                }
+            }
+        } catch {
+            // ignore errors parsing the error page
+        }
+        return;
+    }
     const update_info = await res.json();
     if(update_info.name === data.version) return;
     //@ts-expect-error
@@ -166,6 +186,7 @@ const path = require('path');
 const { sharedServerData } = require('../Server/SharedServerData');
 const internal = require('../../../internal');
 const { functions } = require('../Server/Server');
+const { isFileNameIgnored, isCacheDirectory } = require('./PluginLoader');
 
 function verifyModules() {
     const { promise, resolve, reject } = Promise.withResolvers();
@@ -175,7 +196,7 @@ function verifyModules() {
     const missingDeps = [];
     const paths = fs.readdirSync('plugins');
     paths.forEach((p) => {try {
-        if(p.endsWith('.upd') || p.endsWith('.bak')) return;
+        if(isFileNameIgnored(p) || isCacheDirectory(path.join('plugins', p))) return;
         /**
          * @type {versionInfo}
          */
