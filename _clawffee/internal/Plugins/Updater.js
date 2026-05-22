@@ -2,6 +2,8 @@
 const config = require('../../../version.json');
 
 const launcher = require('../Globals/launcher');
+
+
 /**
  * @typedef versionInfo
  * @prop {string} url url where to catch the update
@@ -103,6 +105,7 @@ launcher.updateInfo.catch(() => {
     console.warn('couldnt check for updates');
 });
 launcher.updateInfo.then((info) => {
+    return;
     if(typeof info == 'string') {
         return console.warn(info);
     }
@@ -186,7 +189,7 @@ const path = require('path');
 const { sharedServerData } = require('../Server/SharedServerData');
 const internal = require('../../../internal');
 const { functions } = require('../Server/Server');
-const { isFileNameIgnored, isCacheDirectory } = require('./PluginLoader');
+const { isFileNameIgnored, isCacheDirectory, getAllPluginFolders } = require('./PluginLoader');
 
 function verifyModules() {
     const { promise, resolve, reject } = Promise.withResolvers();
@@ -271,5 +274,7 @@ sharedServerData.internal.updateInfo = {
 console.log(`\u001b[0m\n Clawffee Version \u001b[33;1m${config.version}\u001b[0m 🐾`);
 
 module.exports = {
-    verifyModules
+    verifyModules: () => {
+        getAllPluginFolders("plugins").then(console.log);
+    }
 }

@@ -97,8 +97,50 @@ function requirePluginsRecursively(dir, depth = 0) {
     }
 }
 
+/**
+ * 
+ * @param {string} dir 
+ * @param {number} depth 
+ * @returns 
+ */
+function getAllPluginFolders(dir, depth=0) {
+    /**
+     * @type {{[path: string]: unknown | Error}}
+     */
+    const dirs = {};
+    const {promise, resolve} = Promise.withResolvers();
+    fs.readdir(dir, (err, folders) => {
+        if(err) {
+            resolve();
+        }
+        let toCheck = folders.length;
+        folders.forEach(async (p) => {
+            const fp = path.join(dir, p);
+            if(fs.existsSync(path.join(fp, "version.json"))) {
+                try {
+                    dirs[fp] = JSON.parse(fs.readFileSync(path.join(fp, "version.json")));
+                } catch(e) {
+                    dirs[fp] = e;
+                }
+            } else {
+                Object.assign(dirs, await getAllPluginFolders(fp, depth+1));
+            }
+            toCheck--;
+            console.log(toCheck);
+            if(toCheck == 0) {
+                resolve(dirs);
+            }
+        });
+        if(folders.length == 0) {
+            resolve([]);
+        }
+    });
+    return promise;
+}
+
 module.exports = {
     requirePluginsRecursively,
     isFileNameIgnored,
-    isCacheDirectory
+    isCacheDirectory,
+    getAllPluginFolders
 }
