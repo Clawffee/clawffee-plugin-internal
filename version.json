@@ -1,11 +1,10 @@
 {
-    "url": "https://api.github.com/repos/Clawffee/clawffee-plugin-internal/releases/latest",
     "version": "0.9.0",
-    "clawffee_version": "0.9.0",
+    "url": "https://github.com/Clawffee/clawffee-plugin-internal.git",
+    "pub_key": "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAyFYXMPZFXCjBs0pRFRMy\ndo5SaWIvlNjlmTGcywSXX+nNUiYLxVc+fr7tZu2SReXlxzpFCbJBXrjL+Xua0xr6\nPJlHxm4AIbhbBEe5ODJgcbiqSrgz2Vyf8MZe/GHcr9yCIalEPc9kerI960dYnAUv\n1ZeX/4gP1avLfOG6kw4RGamXGdwFIj+s55vmbZd2Q0Gid7/wM2aLQ91EAkPXXBQw\nUnDNWOLoctL313klpa3qIYzsdCA6MZJLZlQ0zw6xLYuW4OWBQEclNk8U5opFfbBA\nogsRJZ26i1Pu+EkEhbyCIfC7DvQzqvHo6Eyp/0PMPCDMf4DUUN+lz40eybkOaoxf\nmFD+U9SZfeTMQKSshrSX6jERrWZC8Al3nrLV1NzeDUc85JwYtTpGVvUUn6qFDdoN\nVwgJ0JNp/gHUco4aD7aeTeEH1iMjE5i0SYsJifgKS6UWPyn9QJ7YELI0f1wzcATo\nyYbRb7rIayeAvYW8uZ7BAS6ed3Gzsg9ffB5xrnj5xhVn4gxOxVCirkvPrecNpXdh\njVD+UotuvIUEgPxFvuVAFphjqvtDq2uh5w6wNeiMJmbXMvaeTtZGy6/KB/UPh2Lj\nCyWmF3UzpT9K2YJ94YZRKhsxMZFvfEY5MZkYfbz+7hOrSbEKchRCgvFXBk0x2fDD\nyKse8BtscwcZnR2lnEe1yqMCAwEAAQ==\n-----END PUBLIC KEY-----",
     "dependencies": {
         "builtin": {
-            "url": "https://api.github.com/repos/Clawffee/clawffee-plugin-builtin/releases/latest",
-            "update_file": "builtin.tar.gz",
+            "url": "https://github.com/Clawffee/clawffee-plugin-builtin.git",
             "pub_key": "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAn4dyosEWji6TwLh7OxVL\nbbjOUl2ACT+K279vyojbGimJqgXjsfm650ElRyQbIM2024NM1Ns/1YsMUPOQknxg\nPRcXcAaAADbVINFByebGMudaJVnCkO+2nH1qtsxEOIpKDVGQgLZ+QNqCxxNXbPN+\nY7PAxRd6dlYfLeGIEgkslfTrIZ+R0KyCInTV7MkSVoYvxcN8aBu9tbTpxBDUBY8s\ny4H9eLC1aLjBRX8aCyNhHZhr2ms2vdVM4560gktNNGbRwl480SEQBbc09oZgHrZt\n1PlFH9wGJ8CMFQwsydtQ68UPcmh8QUL04qqij3F1n684hLwCDLi8+kN9SJnFgTPj\nBKioLJ2eQpW/E34B4DNOIcTvfTZD8A8aZsRgzsa0isk0Zam7VP/JzGvzgCIWL/pZ\nS6deyitQxpkc67ffaTemuTG2sTVw0uSiCDGJzSiwLv6CuB6xBRfPSkCkRTc9qAOW\nwxQVN73YgLBKWmx9uQ6aeG+kX1opoEDvbbwgYp595e+k2VVceCT7S6WqJq/S37EW\npmIHwEt5ORHSuyFYbSI7OV3zugIEkhTj7JqblAedHRyXpu2f1wDq2qyRYHofFmsj\n3E2OIPePrrtXOuayzMxYxDH90TELPaPdWGpKwNQbyMB/eC5v+CfC64bQmNsycXHn\n25yPvptKEMqOdqjBpcU7vYcCAwEAAQ==\n-----END PUBLIC KEY-----\n",
             "version": "^0"
         }

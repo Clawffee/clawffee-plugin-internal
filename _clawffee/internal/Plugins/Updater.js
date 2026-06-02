@@ -3,6 +3,58 @@ const config = require('../../../version.json');
 
 const launcher = require('../Globals/launcher');
 
+const fs = require('fs');
+const path = require('path');
+const { sharedServerData } = require('../Server/SharedServerData');
+const internal = require('../../../internal');
+const { functions } = require('../Server/Server');
+const { isFileNameIgnored, isCacheDirectory, getAllPluginFolders } = require('./PluginLoader');
+
+/**
+ * 
+ * @param {string} folder
+ * @param {import('./PluginLoader').PluginData} data 
+ */
+async function installPlugin(folder, data) {
+    const { git, git_http } = launcher;
+    const dir = path.join("plugins", folder + '.upd');
+    try {
+        try {
+            fs.rmSync(dir, {recursive: true});
+        } catch(_) {}
+        fs.mkdirSync(dir, {recursive: true});
+    } catch(e) {
+        throw new Error("failed to create the plugin folder!", {
+            cause: e
+        });
+    }
+    await git.clone({ 
+            fs, http: git_http, dir,
+            url: data.url,
+            singleBranch: true,
+            depth: 1,
+            ref: data.branch,
+            onProgress(v) {
+                console.log(v.phase);
+                console.log(v.loaded / v.total || 0);
+            }
+        });
+        console.log('done!');
+        if(!launcher.verifyHash(dir, data.pub_key)) {
+            throw new Error("plugin failed to pass hash verification!");
+        }
+        fs.renameSync(dir, dir.substring(0, dir.length-4));
+        return true;
+}
+
+/**
+ * 
+ * @param {string} path 
+ * @param {import('./PluginLoader').PluginData} data 
+ */
+function updatePlugin(path, data) {
+
+}
 
 /**
  * @typedef versionInfo
@@ -105,7 +157,7 @@ launcher.updateInfo.catch(() => {
     console.warn('couldnt check for updates');
 });
 launcher.updateInfo.then((info) => {
-    return;
+    return; //TODO
     if(typeof info == 'string') {
         return console.warn(info);
     }
@@ -136,6 +188,7 @@ launcher.updateInfo.then((info) => {
  * @returns 
  */
 async function initUpdate(path, data) {
+    return;
     if(!data.url) return;
     //@ts-expect-error
     const update_file_name = data.update_file_name ?? path + '.tar.gz';
@@ -184,84 +237,42 @@ async function initUpdate(path, data) {
     }
 }
 
-const fs = require('fs');
-const path = require('path');
-const { sharedServerData } = require('../Server/SharedServerData');
-const internal = require('../../../internal');
-const { functions } = require('../Server/Server');
-const { isFileNameIgnored, isCacheDirectory, getAllPluginFolders } = require('./PluginLoader');
-
-function verifyModules() {
-    const { promise, resolve, reject } = Promise.withResolvers();
+function verifyModules() {return new Promise(
+(resolve, reject) => getAllPluginFolders("plugins").then(x => {
     /**
      * @type {{dep: versionInfo, folder: string}[]}
      */
     const missingDeps = [];
-    const paths = fs.readdirSync('plugins');
-    paths.forEach((p) => {try {
-        if(isFileNameIgnored(p) || isCacheDirectory(path.join('plugins', p))) return;
-        /**
-         * @type {versionInfo}
-         */
-        if(!fs.existsSync(path.join('plugins', p, 'version.json'))) return;
-        const data = JSON.parse(fs.readFileSync(path.join('plugins', p, 'version.json')).toString());
-        if(p != 'internal') initUpdate(p, data);
-        Object.keys(data.dependencies ?? {}).forEach(folder => {
-            folder = path.normalize(folder);
-            if(folder.startsWith('..') || path.isAbsolute(folder)) {
+    Object.entries(x).every(([p, v]) => {
+        initUpdate(p, v);
+        Object.entries(v.dependencies).forEach(([dp, dv]) => {
+            dp = path.normalize(dp);
+            if(dp.startsWith('..') || dp == "." || path.isAbsolute(dp)) {
                 return;
             }
-            const dep = data.dependencies[folder];
-            if(fs.existsSync(path.join('plugins', folder))) {
-                if(!dep.version) {
-                    return;
-                }
-                /**
-                 * @type {versionInfo}
-                 */
-                const otherdata = JSON.parse(fs.readFileSync(path.join('plugins', folder, 'version.json')).toString());
-                if(Bun.semver.satisfies(otherdata.version, dep.version)) return;
-            }
-            // Do version checking here
-            missingDeps.push({folder, dep: data.dependencies[folder]});
+            const fdp = path.join('plugins', dp);
+            if(x[fdp] && Bun.semver.satisfies(x[fdp].version, dv.version)) return;
+            missingDeps.push({folder: dp, dep: dv});
         });
-    } catch(e) {
-        console.error("failed to parse", p, e);
-        console.error("Exiting...");
-        process.exit(1);
-    }});
-    if(missingDeps.length == 0) {
-        return Promise.resolve(true);
-    }
+    });
+    if(missingDeps.length == 0) resolve(true);
     sharedServerData.internal.updateInfo.missingDeps = missingDeps;
     console.log("\n\nThe following plugins need to be installed:\n\n");
     missingDeps.forEach(dep => console.log("\u001b[33m" + dep.folder + "\u001b[0m available at \u001b[32;1;4m" + dep.dep.url + "\u001b[0m"))
     console.log("\n");
     functions['/internal/updater/installMissingDeps/'] = () => {
         delete functions['/internal/updater/installMissingDeps/'];
-        sharedServerData.internal.updateInfo.state = 'installing...';
         missingDeps.forEach(async (dep) => {
-            const res = await fetch(dep.dep.url, {
-                redirect: 'follow'
-            });
-            if(res.status != 200) return reject(console.warn('failed to fetch for updates for', path));
-            const update_info = await res.json();
-            //@ts-ignore
-            const updateFile = update_info.assets.find(v => v.name === dep.dep.update_file);
-            const ret = await runUpdate(dep.folder, 
-                updateFile.url,
-                dep.dep.pub_key
-            );
-            if(ret) return console.error(ret);
-            let i = missingDeps.indexOf(dep);
-            //@ts-ignore
-            if(i != missingDeps.length-1) missingDeps[i] = missingDeps.pop();
-            else missingDeps.pop();
-            if(missingDeps.length == 0) resolve(false);
+            try {
+                await installPlugin(dep.folder, dep.dep);
+                missingDeps.filter(x => x != dep);
+                if(missingDeps.length == 0) resolve(false);
+            } catch(err) {
+                reject(err);
+            }
         });
     }
-    return promise;
-}
+}));}
 
 sharedServerData.internal.updateInfo = {
     version: config.version,
@@ -274,7 +285,5 @@ sharedServerData.internal.updateInfo = {
 console.log(`\u001b[0m\n Clawffee Version \u001b[33;1m${config.version}\u001b[0m 🐾`);
 
 module.exports = {
-    verifyModules: () => {
-        getAllPluginFolders("plugins").then(console.log);
-    }
+    verifyModules
 }

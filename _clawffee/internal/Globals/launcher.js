@@ -17,6 +17,8 @@
  * @prop {string} pubKey
  * @prop {(encHash: Buffer<ArrayBuffer>, pubKey: string) => string?} getPubHash
  * @prop {metaInfo} meta
+ * @prop {import('isomorphic-git')} git
+ * @prop {import('isomorphic-git/http/node')} git_http
  */
 /**
  * @type {InternalData}

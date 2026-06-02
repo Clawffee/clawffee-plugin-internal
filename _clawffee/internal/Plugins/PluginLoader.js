@@ -9,6 +9,14 @@ const IGNORED_PREFIXES = [".", "_"];
 const IGNORED_SUFFIXES = ["~", "-"];
 
 /**
+ * @typedef PluginData
+ * @prop {string} url
+ * @prop {string} [branch]
+ * @prop {string} [version]
+ * @prop {string} pub_key
+ * @prop {{[x: string]: PluginData}} [dependencies]
+ */
+/**
  * @param {string} fileName The basename of a file
  * @returns {boolean}
  */
@@ -101,7 +109,7 @@ function requirePluginsRecursively(dir, depth = 0) {
  * 
  * @param {string} dir 
  * @param {number} depth 
- * @returns 
+ * @returns {Promise<any>}
  */
 function getAllPluginFolders(dir, depth=0) {
     /**
@@ -118,7 +126,7 @@ function getAllPluginFolders(dir, depth=0) {
             const fp = path.join(dir, p);
             if(fs.existsSync(path.join(fp, "version.json"))) {
                 try {
-                    dirs[fp] = JSON.parse(fs.readFileSync(path.join(fp, "version.json")));
+                    dirs[fp] = JSON.parse(fs.readFileSync(path.join(fp, "version.json")).toString());
                 } catch(e) {
                     dirs[fp] = e;
                 }
@@ -126,7 +134,6 @@ function getAllPluginFolders(dir, depth=0) {
                 Object.assign(dirs, await getAllPluginFolders(fp, depth+1));
             }
             toCheck--;
-            console.log(toCheck);
             if(toCheck == 0) {
                 resolve(dirs);
             }
