@@ -44,7 +44,7 @@ function setTerminal(mode) {
 
 function hideTerminal() {
     terminalShown = false;
-    setTerminal(0);
+    //setTerminal(0);
 }
 
 function showTerminal() {

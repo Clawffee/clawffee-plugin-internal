@@ -188,53 +188,6 @@ launcher.updateInfo.then((info) => {
  * @returns 
  */
 async function initUpdate(path, data) {
-    return;
-    if(!data.url) return;
-    //@ts-expect-error
-    const update_file_name = data.update_file_name ?? path + '.tar.gz';
-    let res;
-    try {
-        res = await fetch(data.url);
-    } catch(e) {
-        console.debug(e);
-        return console.warn('failed to check for updates for', path)
-    }
-    if(res.status != 200) {
-        console.warn('failed to check for updates for', path, `(HTTP status ${res.status})`);
-        try {
-            const errorJson = await res.json();
-            if (errorJson != null && typeof errorJson === "object") {
-                if ("message" in errorJson) {
-                    if (String(errorJson.message).includes("API rate limit exceeded")) {
-                        console.warn("the reason for this failure is, that you are being rate limited by GitHub");
-                    }
-                    console.debug(`GitHub: ${String(errorJson.message)}`);
-                }
-                if ("documentation_url" in errorJson) {
-                    console.debug(`GitHub Documentation: ${String(errorJson.documentation_url)}`);
-                }
-            }
-        } catch {
-            // ignore errors parsing the error page
-        }
-        return;
-    }
-    const update_info = await res.json();
-    if(update_info.name === data.version) return;
-    //@ts-expect-error
-    const updateFile = update_info.assets.find(v => v.name === update_file_name);
-    if(!updateFile) return console.warn(`update for plugin ${path} malformed!`);
-    console.log(`\n\u001b[32mUpdate available for plugin \u001b[0m${path}\u001b[32m! \u001b[0m${update_info.name}\n\n\u001b[32mUpdate now at \u001b[0;1;3;4mhttp://localhost:4444/update/${path}\u001b[0m\n\n${update_info.body}\n`);
-    require('../Server/Server').functions['/update/' + path] = async () => {
-        try {
-            const ret = await runUpdate(path, updateFile.url, data.pub_key);
-            if(ret) return console.error(ret);
-            prompt('Please relaunch clawffee...');
-            process.exit(0);
-        } catch(e) {
-            console.log(e);
-        }
-    }
 }
 
 function verifyModules() {return new Promise(
@@ -255,7 +208,7 @@ function verifyModules() {return new Promise(
             missingDeps.push({folder: dp, dep: dv});
         });
     });
-    if(missingDeps.length == 0) resolve(true);
+    if(missingDeps.length == 0) return resolve(true);
     sharedServerData.internal.updateInfo.missingDeps = missingDeps;
     console.log("\n\nThe following plugins need to be installed:\n\n");
     missingDeps.forEach(dep => console.log("\u001b[33m" + dep.folder + "\u001b[0m available at \u001b[32;1;4m" + dep.dep.url + "\u001b[0m"))

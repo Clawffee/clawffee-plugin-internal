@@ -6,7 +6,8 @@
         "builtin": {
             "url": "https://github.com/Clawffee/clawffee-plugin-builtin.git",
             "pub_key": "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAn4dyosEWji6TwLh7OxVL\nbbjOUl2ACT+K279vyojbGimJqgXjsfm650ElRyQbIM2024NM1Ns/1YsMUPOQknxg\nPRcXcAaAADbVINFByebGMudaJVnCkO+2nH1qtsxEOIpKDVGQgLZ+QNqCxxNXbPN+\nY7PAxRd6dlYfLeGIEgkslfTrIZ+R0KyCInTV7MkSVoYvxcN8aBu9tbTpxBDUBY8s\ny4H9eLC1aLjBRX8aCyNhHZhr2ms2vdVM4560gktNNGbRwl480SEQBbc09oZgHrZt\n1PlFH9wGJ8CMFQwsydtQ68UPcmh8QUL04qqij3F1n684hLwCDLi8+kN9SJnFgTPj\nBKioLJ2eQpW/E34B4DNOIcTvfTZD8A8aZsRgzsa0isk0Zam7VP/JzGvzgCIWL/pZ\nS6deyitQxpkc67ffaTemuTG2sTVw0uSiCDGJzSiwLv6CuB6xBRfPSkCkRTc9qAOW\nwxQVN73YgLBKWmx9uQ6aeG+kX1opoEDvbbwgYp595e+k2VVceCT7S6WqJq/S37EW\npmIHwEt5ORHSuyFYbSI7OV3zugIEkhTj7JqblAedHRyXpu2f1wDq2qyRYHofFmsj\n3E2OIPePrrtXOuayzMxYxDH90TELPaPdWGpKwNQbyMB/eC5v+CfC64bQmNsycXHn\n25yPvptKEMqOdqjBpcU7vYcCAwEAAQ==\n-----END PUBLIC KEY-----\n",
-            "version": "^0"
+            "version": "^0",
+            "branch": "release"
         }
     }
 }

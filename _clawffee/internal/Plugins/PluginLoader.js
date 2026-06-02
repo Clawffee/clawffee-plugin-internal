@@ -4,7 +4,7 @@ const path = require('path');
 
 const IGNORED_FOLDERS = ["node_modules"];
 // using prefixes to allow for `.bak2`, `.bak3`, etc.
-const IGNORED_EXTENSION_PREFIXES = [".bak", ".backup", ".upd", ".orig"];
+const IGNORED_EXTENSION_SUFFIXES = [".bak", ".backup", ".upd", ".orig"];
 const IGNORED_PREFIXES = [".", "_"];
 const IGNORED_SUFFIXES = ["~", "-"];
 
@@ -22,7 +22,7 @@ const IGNORED_SUFFIXES = ["~", "-"];
  */
 function isFileNameIgnored(fileName) {
     return IGNORED_PREFIXES.some(prefix => fileName.startsWith(prefix))
-        || IGNORED_EXTENSION_PREFIXES.some(extensionPrefix => path.extname(fileName).startsWith(extensionPrefix))
+        || IGNORED_EXTENSION_SUFFIXES.some(extensionPrefix => path.extname(fileName).startsWith(extensionPrefix))
         || IGNORED_SUFFIXES.some(suffix => fileName.endsWith(suffix));
 }
 
@@ -123,6 +123,10 @@ function getAllPluginFolders(dir, depth=0) {
         }
         let toCheck = folders.length;
         folders.forEach(async (p) => {
+            if(isFileNameIgnored(p)) {
+                toCheck--;
+                return;
+            }
             const fp = path.join(dir, p);
             if(fs.existsSync(path.join(fp, "version.json"))) {
                 try {
