@@ -204,7 +204,10 @@ async function hasUpdate(path) {
         const remoteURL = (await git.listRemotes({
             fs,
             dir: path
-        }))[0].url;
+        }))[0]?.url;
+        if(!remoteURL) {
+            return false;
+        }
         const remoteCommit = (await git.listServerRefs({
             http: git_http,
             url: remoteURL
