@@ -215,7 +215,7 @@ async function hasUpdate(path) {
         return (remoteCommit?.oid ?? currentCommit) !== currentCommit;
     } catch(e) {
         console.error(`Error checking updates for ${path}:`, e);
-        return false;
+        return [false, null, null];
     }
 }
 
@@ -229,7 +229,8 @@ async function initUpdate(path, data) {
     if(!await hasUpdate(path)) {
         return;
     }
-    console.log("update available!");
+    sharedServerData.internal.updateInfo.updates ??= {};
+    sharedServerData.internal.updateInfo.updates[path] = true;
 }
 
 function verifyModules() {return new Promise(
@@ -238,7 +239,6 @@ function verifyModules() {return new Promise(
      * @type {{dep: versionInfo, folder: string}[]}
      */
     const missingDeps = [];
-    console.log(x);
     Object.entries(x).forEach(([p, v]) => {
         initUpdate(p, v);
         Object.entries(v.dependencies ?? {}).forEach(([dp, dv]) => {
@@ -252,7 +252,6 @@ function verifyModules() {return new Promise(
         });
     });
     if(missingDeps.length == 0) return resolve(true);
-    sharedServerData.internal.updateInfo.missingDeps = missingDeps;
     console.log("\n\nThe following plugins need to be installed:\n\n");
     missingDeps.forEach(dep => console.log("\u001b[33m" + dep.folder + "\u001b[0m available at \u001b[32;1;4m" + dep.dep.url + "\u001b[0m"))
     console.log("\n");
@@ -268,6 +267,7 @@ function verifyModules() {return new Promise(
             }
         });
     }
+    sharedServerData.internal.updateInfo.missingDeps = missingDeps;
 }));}
 
 sharedServerData.internal.updateInfo = {
