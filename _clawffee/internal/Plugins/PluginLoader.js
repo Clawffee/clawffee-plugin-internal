@@ -129,11 +129,9 @@ function getAllPluginFolders(dir, depth=0) {
             }
             const fp = path.join(dir, p);
             if(fs.existsSync(path.join(fp, "version.json"))) {
-                try {
-                    dirs[fp] = JSON.parse(fs.readFileSync(path.join(fp, "version.json")).toString());
-                } catch(e) {
-                    dirs[fp] = e;
-                }
+                dirs[fp] = JSON.parse((await new Promise(
+                    (resolve, reject) => fs.readFile(path.join(fp, "version.json"), (err, data) => err?reject(err):resolve(data))
+                )).toString());
             } else {
                 Object.assign(dirs, await getAllPluginFolders(fp, depth+1));
             }

@@ -184,10 +184,49 @@ launcher.updateInfo.then((info) => {
 /**
  * 
  * @param {string} path 
+ * @returns 
+ */
+async function hasUpdate(path) {
+    const { git, git_http } = launcher;
+    try {    
+        // Get current commit hash
+        const currentCommit = await git.resolveRef({ 
+            fs, 
+            dir: path,
+            ref: 'HEAD'
+        });
+        const branch = await git.currentBranch({
+            fs, 
+            dir: path,
+            fullname: true
+        });
+        // Get remote commit hash for the branch
+        const remoteURL = (await git.listRemotes({
+            fs,
+            dir: path
+        }))[0].url;
+        const remoteCommit = (await git.listServerRefs({
+            http: git_http,
+            url: remoteURL
+        })).find(ref => ref.ref == branch);
+        return (remoteCommit?.oid ?? currentCommit) !== currentCommit;
+    } catch(e) {
+        console.error(`Error checking updates for ${path}:`, e);
+        return false;
+    }
+}
+
+/**
+ * 
+ * @param {string} path 
  * @param {versionInfo} data 
  * @returns 
  */
 async function initUpdate(path, data) {
+    if(!await hasUpdate(path)) {
+        return;
+    }
+    console.log("update available!");
 }
 
 function verifyModules() {return new Promise(
@@ -196,9 +235,10 @@ function verifyModules() {return new Promise(
      * @type {{dep: versionInfo, folder: string}[]}
      */
     const missingDeps = [];
-    Object.entries(x).every(([p, v]) => {
+    console.log(x);
+    Object.entries(x).forEach(([p, v]) => {
         initUpdate(p, v);
-        Object.entries(v.dependencies).forEach(([dp, dv]) => {
+        Object.entries(v.dependencies ?? {}).forEach(([dp, dv]) => {
             dp = path.normalize(dp);
             if(dp.startsWith('..') || dp == "." || path.isAbsolute(dp)) {
                 return;
